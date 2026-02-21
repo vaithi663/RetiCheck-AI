@@ -25,14 +25,14 @@ cdss_data = {
 }
 
 # 2. XAI Heatmap Functions
-# 2. XAI Heatmap Functions (ACCURATE VERSION)
-def generate_robust_heatmap(img_array, model, class_index, patch_size=16, step=8):
+# 2. XAI Heatmap Functions (LOW MEMORY VERSION FOR RENDER)
+def generate_robust_heatmap(img_array, model, class_index, patch_size=32, step=32):
     try:
         base_pred = model.predict(img_array, verbose=0)[0][class_index]
         patches, coords = [], []
         img_size = 224
         
-        # Scanning the image with a smaller, finer box
+        # Bigger step size to save memory (creates fewer patches)
         for y in range(0, img_size, step):
             for x in range(0, img_size, step):
                 y_end, x_end = min(y + patch_size, img_size), min(x + patch_size, img_size)
@@ -45,14 +45,13 @@ def generate_robust_heatmap(img_array, model, class_index, patch_size=16, step=8
                 
         if not patches: return None
         
-        # Predict all patches
-        preds = model.predict(np.array(patches), batch_size=32, verbose=0)[:, class_index]
+        # PREVENT RAM CRASH: batch_size=8 strictly tells it not to overload memory
+        preds = model.predict(np.array(patches), batch_size=8, verbose=0)[:, class_index]
         
         heatmap = np.zeros((img_size, img_size))
         for i, (y, y_end, x, x_end) in enumerate(coords):
             drop = base_pred - preds[i]
-            # STRICT ACCURACY: Only mark regions where hiding it drops confidence significantly (>2%)
-            if drop > 0.02: 
+            if drop > 0.01: 
                 heatmap[y:y_end, x:x_end] += drop
                 
         heatmap = np.maximum(heatmap, 0)
@@ -60,8 +59,7 @@ def generate_robust_heatmap(img_array, model, class_index, patch_size=16, step=8
         if max_val > 0: 
             heatmap /= max_val
             
-        # Smooth the heatmap so it looks like medical imaging, not blocky pixels
-        heatmap_img = Image.fromarray(np.uint8(255 * heatmap)).filter(ImageFilter.GaussianBlur(radius=6))
+        heatmap_img = Image.fromarray(np.uint8(255 * heatmap)).filter(ImageFilter.GaussianBlur(radius=8))
         return np.array(heatmap_img) / 255.0
     except Exception as e: 
         print("Heatmap Error:", e)
@@ -139,4 +137,5 @@ def predict():
     })
 
 if __name__ == '__main__':
+
     app.run(debug=True, port=5000)
