@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetiCheck | Comprehensive Patient Data</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: #0f172a; 
+            color: #f8fafc;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .main-form-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 25px;
+            width: 100%;
+            max-width: 900px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+
+        h2 { font-size: 28px; margin-bottom: 10px; color: #fff; }
+        .accent { color: #00f2fe; }
+        p.desc { color: #94a3b8; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+
+        /* Form Sections */
+        .section-title {
+            color: #00f2fe;
+            font-size: 18px;
+            margin: 25px 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        .input-group { margin-bottom: 15px; }
+        label { display: block; color: #cbd5e1; font-size: 13px; margin-bottom: 6px; }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { border-color: #00f2fe; background: #263449; }
+
+        /* Medical Vitals Highlight */
+        .vitals-box {
+            background: rgba(0, 242, 254, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px dashed #00f2fe;
+        }
+
+        .submit-area {
+            margin-top: 40px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: 0.4s;
+        }
+
+        .btn-save { background: linear-gradient(90deg, #00f2fe, #4facfe); color: #0f172a; }
+        .btn-save:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 242, 254, 0.3); }
+        
+        .btn-cancel { background: transparent; border: 1px solid #ef4444; color: #ef4444; }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-form-card">
+        <h2>Hospital <span class="accent">Intake Form</span></h2>
+        <p class="desc">Please fill out all medical details for clinical multi-disease screening.</p>
+
+        <form>
+            <div class="section-title">👤 Basic Information</div>
+            <div class="grid-3">
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" placeholder="Eg: Arunkumar M">
+                </div>
+                <div class="input-group">
+                    <label>Date of Birth</label>
+                    <input type="date">
+                </div>
+                <div class="input-group">
+                    <label>Gender</label>
+                    <select>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>Contact Number</label>
+                    <input type="tel" placeholder="+91 XXXXX XXXXX">
+                </div>
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" placeholder="patient@example.com">
+                </div>
+            </div>
+
+            <div class="section-title">🏥 Clinical History</div>
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>Diabetes Status</label>
+                    <select>
+                        <option>Non-Diabetic</option>
+                        <option>Type 1 Diabetes</option>
+                        <option>Type 2 Diabetes</option>
+                        <option>Gestational</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Blood Pressure (BP)</label>
+                    <select>
+                        <option>Normal</option>
+                        <option>Hypertension (High)</option>
+                        <option>Hypotension (Low)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Current Medications / Allergies</label>
+                <textarea rows="2" placeholder="List any medications or allergies..."></textarea>
+            </div>
+
+            <div class="section-title">📊 Current Vitals</div>
+            <div class="vitals-box grid-3">
+                <div class="input-group">
+                    <label>Blood Glucose (mg/dL)</label>
+                    <input type="number" placeholder="Eg: 120">
+                </div>
+                <div class="input-group">
+                    <label>Systolic BP</label>
+                    <input type="number" placeholder="Eg: 120">
+                </div>
+                <div class="input-group">
+                    <label>Diastolic BP</label>
+                    <input type="number" placeholder="Eg: 80">
+                </div>
+            </div>
+
+            <div class="section-title">🚨 Emergency Contact</div>
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>Relative Name</label>
+                    <input type="text" placeholder="Name of guardian/spouse">
+                </div>
+                <div class="input-group">
+                    <label>Relationship</label>
+                    <input type="text" placeholder="Eg: Brother, Wife">
+                </div>
+            </div>
+
+            <div class="submit-area">
+                <button type="reset" class="btn btn-cancel">Reset Form</button>
+                <button type="button" class="btn btn-save" onclick="window.location.href='/upload'">Save & Proceed to Scan →</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

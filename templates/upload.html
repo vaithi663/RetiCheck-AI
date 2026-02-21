@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetiCheck | AI Diagnosis Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: radial-gradient(circle at top left, #1e293b, #0f172a); 
+            min-height: 100vh; 
+            color: white; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 30px; 
+        }
+
+        .header { text-align: center; margin-bottom: 30px; animation: fadeInDown 1s ease; }
+        .logo { font-size: 36px; font-weight: 800; letter-spacing: 1px; }
+        .logo span { background: linear-gradient(90deg, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: #94a3b8; font-size: 16px; margin-top: 5px; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            animation: fadeInUp 1s ease;
+        }
+
+        /* PREMIUM UPLOAD ZONE */
+        .upload-zone {
+            width: 100%;
+            height: 320px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 25px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            border: 2px dashed #334155;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-zone:hover {
+            border-color: #00f2fe;
+            background: rgba(0, 242, 254, 0.05);
+            transform: translateY(-5px);
+        }
+
+        .upload-placeholder {
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .upload-icon {
+            font-size: 60px;
+            color: #00f2fe;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .upload-text { color: #cbd5e1; font-size: 18px; font-weight: 600; }
+        .upload-subtext { color: #64748b; font-size: 14px; margin-top: 8px; }
+
+        #preview-img { 
+            width: 100%; height: 100%; object-fit: cover; display: none; border-radius: 25px;
+        }
+
+        /* Scanning Animation */
+        .scan-line {
+            position: absolute; top: 0; width: 100%; height: 4px;
+            background: #00f2fe; box-shadow: 0 0 30px #00f2fe, 0 0 10px #00f2fe;
+            display: none; z-index: 5;
+        }
+        @keyframes scanning { 0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        .analyze-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(90deg, #00f2fe, #4facfe);
+            color: #0f172a;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px -10px rgba(0, 242, 254, 0.5);
+            transition: 0.3s;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        
+        .analyze-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 35px -10px rgba(0, 242, 254, 0.6); }
+        .analyze-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        /* Loading Progress */
+        .loading-container { display: none; margin-top: 30px; }
+        .progress-bar { background: #1e293b; height: 8px; border-radius: 10px; margin-top: 15px; overflow: hidden; position: relative; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00f2fe, #4facfe); transition: width 0.2s ease-in-out; border-radius: 10px; }
+        .status-text-container { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">RetiCheck <span>AI</span></div>
+        <p class="subtitle">Advanced Retinal Disease Screening Portal</p>
+    </div>
+
+    <div class="glass-card">
+        
+        <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div id="scan-line" class="scan-line"></div>
+            
+            <div class="upload-placeholder" id="placeholderContent">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <p class="upload-text">Click to Upload Retinal Scan</p>
+                <p class="upload-subtext">Supports JPG, PNG (Max 10MB)</p>
+            </div>
+
+            <img id="preview-img">
+        </div>
+
+        <input type="file" id="fileInput" hidden accept="image/*" onchange="previewFile()">
+
+        <button class="analyze-btn" id="analyzeBtn" onclick="runFullAnalysis()">
+            <i class="fa-solid fa-microchip"></i> START AI DIAGNOSIS
+        </button>
+
+        <div class="loading-container" id="loadingArea">
+            <div class="status-text-container">
+                <span style="color: #00f2fe;">Processing Image...</span>
+                <span id="progressPercent" style="color: #94a3b8;">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="pFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const previewImg = document.getElementById('preview-img');
+        const placeholderContent = document.getElementById('placeholderContent');
+        const dropZone = document.getElementById('dropZone');
+        const scanLine = document.getElementById('scan-line');
+        const pFill = document.getElementById('pFill');
+        const progressPercent = document.getElementById('progressPercent');
+        const loadingArea = document.getElementById('loadingArea');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const fileInput = document.getElementById('fileInput');
+
+        // 1. File Preview Logic (Clean & Simple)
+        function previewFile() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                placeholderContent.style.display = 'none'; // Hide icon
+                previewImg.style.display = 'block'; // Show image
+                previewImg.src = reader.result;
+                // Add a cool border glow when image is loaded
+                dropZone.style.borderColor = '#00f2fe';
+                dropZone.style.boxShadow = '0 0 20px rgba(0, 242, 254, 0.2)';
+            }
+            reader.readAsDataURL(file);
+        }
+
+        // 2. The Analysis Logic (Removed Camera parts)
+        async function runFullAnalysis() {
+            if (!fileInput.files.length) {
+                alert("⚠️ Please upload a retinal scan image first.");
+                // Shake animation for feedback
+                dropZone.style.animation = 'shake 0.5s';
+                setTimeout(() => dropZone.style.animation = '', 500);
+                return;
+            }
+
+            // Start UI Animations
+            loadingArea.style.display = 'block';
+            scanLine.style.display = 'block';
+            scanLine.style.animation = 'scanning 1.5s infinite ease-in-out';
+            analyzeBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Analyzing...';
+            analyzeBtn.disabled = true;
+            dropZone.style.pointerEvents = 'none'; // Prevent double upload during process
+
+            // Fake Progress Animation
+            let progress = 0;
+            let progressInterval = setInterval(() => {
+                if(progress < 95) { 
+                    progress += Math.floor(Math.random() * 5) + 1;
+                    if(progress > 95) progress = 95;
+                    pFill.style.width = progress + "%";
+                    progressPercent.innerText = progress + "%";
+                }
+            }, 150);
+
+            // Prepare Data
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+
+            try {
+                // Send to Python Backend
+                let response = await fetch('/predict', { method: 'POST', body: formData });
+                let data = await response.json();
+                
+                // Save result to memory
+                localStorage.setItem('aiResult', JSON.stringify(data));
+
+                // Complete Animation
+                clearInterval(progressInterval);
+                pFill.style.width = "100%";
+                progressPercent.innerText = "100% - Complete";
+                
+                setTimeout(() => { window.location.href = "/result"; }, 800);
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                alert("❌ Error connecting to AI Server! Is Flask running?");
+                // Reset UI
+                analyzeBtn.innerHTML = '<i class="fa-solid fa-microchip"></i> START AI DIAGNOSIS';
+                analyzeBtn.disabled = false;
+                loadingArea.style.display = 'none';
+                scanLine.style.display = 'none';
+                dropZone.style.pointerEvents = 'auto';
+            }
+        }
+    </script>
+    <style>
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } 100% { transform: translateX(0); } }
+    </style>
+</body>
+</html>

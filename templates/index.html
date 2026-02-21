@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetiCheck AI | Login</title>
+    <style>
+        /* Modern Trending CSS */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background: radial-gradient(circle at top left, #1e293b, #0f172a);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism Effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 24px;
+            width: 380px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 { color: #fff; margin-bottom: 10px; font-size: 28px; }
+        .badge { background: linear-gradient(90deg, #00f2fe, #4facfe); color: #000; padding: 2px 10px; border-radius: 5px; font-size: 14px; font-weight: bold; }
+        p { color: #94a3b8; margin-bottom: 30px; font-size: 14px; }
+
+        .input-box { width: 100%; margin-bottom: 20px; text-align: left; }
+        label { color: #cbd5e1; font-size: 13px; display: block; margin-bottom: 8px; margin-left: 5px; }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { border-color: #4facfe; box-shadow: 0 0 10px rgba(79, 172, 254, 0.3); }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, #00f2fe, #4facfe);
+            border: none;
+            border-radius: 12px;
+            color: #0f172a;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.4s;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(79, 172, 254, 0.4); }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card">
+        <h2>RetiCheck <span class="badge">AI</span></h2>
+        <p>Medical Professional Portal</p>
+        
+        <form action="/patient">
+            <div class="input-box">
+                <label>Username</label>
+                <input type="text" placeholder="Your Unique ID" required>
+            </div>
+            <div class="input-box">
+                <label>Password</label>
+                <input type="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="login-btn">LOGIN SECURELY</button>
+        </form>
+    </div>
+
+</body>
+</html>

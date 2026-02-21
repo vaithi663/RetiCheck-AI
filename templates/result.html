@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetiCheck | AI Analysis Report</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #0f172a; color: white; padding: 30px; }
+
+        .report-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 40px;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 20px; }
+        .logo span { color: #00f2fe; }
+
+        /* AI Visualization Section */
+        .visualization-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .img-card {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        /* FIX: இமேஜ் கட் ஆகாமல் முழுசாக தெரிய 'contain' பயன்படுத்தப்பட்டுள்ளது */
+        .img-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: contain; 
+            border-radius: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #334155;
+            background: #000; 
+        }
+
+        /* Results Grid */
+        .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        .res-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; text-align: center; border-left: 4px solid #334155; }
+
+        .btn-print {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, #00f2fe, #4facfe);
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="report-container">
+        <div class="header">
+            <h2 class="logo">RetiCheck <span>AI Report</span></h2>
+            <div id="header-status" style="color: #10b981; font-weight:bold;">● System Diagnosis: Loading...</div>
+        </div>
+
+        <div class="visualization-area">
+            <div class="img-card">
+                <img id="display-orig" src="" alt="Original Scan">
+                <p style="font-size: 13px; color: #94a3b8;">Original Fundus Image</p>
+            </div>
+            
+            <div class="img-card">
+                <img id="display-heat" src="" alt="Heatmap Scan">
+                <p style="font-size: 13px; color: #00f2fe;" id="heatmap-caption">AI Heatmap Visualization (XAI)</p>
+            </div>
+        </div>
+
+        <h3>Pathology Detection</h3>
+        <div class="result-grid">
+            <div class="res-card" id="main-result-card">
+                <p style="font-size: 12px; color: #94a3b8;" id="pred-title">Analyzing...</p>
+                <h2 id="pred-score">--%</h2>
+                <small id="pred-status">Please wait...</small>
+            </div>
+            <div class="res-card dummy-card">
+                <p style="font-size: 12px; color: #94a3b8;">Glaucoma</p>
+                <h2 style="color: #10b981;">--</h2>
+                <small>Scanning...</small>
+            </div>
+            <div class="res-card dummy-card">
+                <p style="font-size: 12px; color: #94a3b8;">AMD</p>
+                <h2 style="color: #10b981;">--</h2>
+                <small>Scanning...</small>
+            </div>
+        </div>
+
+        <div id="verdict-box" style="margin-top: 30px; padding: 20px; border-radius: 15px; border: 1px solid #334155;">
+            <strong id="verdict-title">AI Clinical Verdict:</strong>
+            <p id="verdict-text" style="font-size: 14px; margin-top: 5px;">Analyzing clinical correlations...</p>
+        </div>
+
+        <button class="btn-print" onclick="window.print()">Download Medical Report (PDF)</button>
+    </div>
+
+    <script>
+        const aiDataJSON = localStorage.getItem('aiResult');
+        
+        if(aiDataJSON) {
+            const aiData = JSON.parse(aiDataJSON);
+            
+            // 1. SET IMAGES (Base64)
+            if(aiData.orig_img) {
+                document.getElementById('display-orig').src = "data:image/jpeg;base64," + aiData.orig_img;
+            }
+            if(aiData.heat_gen && aiData.heat_img) {
+                document.getElementById('display-heat').src = "data:image/jpeg;base64," + aiData.heat_img;
+            } else {
+                // If normal, just show original image again with a message
+                document.getElementById('display-heat').src = "data:image/jpeg;base64," + aiData.orig_img;
+                document.getElementById('heatmap-caption').innerText = "Healthy Retina (No Heatmap Needed)";
+                document.getElementById('heatmap-caption').style.color = "#10b981";
+            }
+
+            // 2. SET TEXT DATA
+            const headerStatus = document.getElementById('header-status');
+            const mainCard = document.getElementById('main-result-card');
+            const scoreTitle = document.getElementById('pred-title');
+            const scoreValue = document.getElementById('pred-score');
+            const scoreStatus = document.getElementById('pred-status');
+            const dummyCards = document.querySelectorAll('.dummy-card');
+            
+            const verdictBox = document.getElementById('verdict-box');
+            const verdictTitle = document.getElementById('verdict-title');
+            const verdictText = document.getElementById('verdict-text');
+
+            headerStatus.innerText = "● System Diagnosis: " + aiData.triage;
+            scoreTitle.innerText = "AI Prediction: " + aiData.disease;
+            scoreValue.innerText = aiData.confidence;
+            scoreStatus.innerText = "Status: " + aiData.status;
+
+            verdictText.innerText = "Action Required: " + aiData.action + " | Doctor Advice: " + aiData.advice;
+
+            // 3. COLOR LOGIC
+            if(aiData.triage === "SAFE") {
+                const color = "#10b981"; 
+                headerStatus.style.color = color;
+                scoreValue.style.color = color;
+                mainCard.style.borderLeftColor = color;
+                verdictBox.style.background = "rgba(16, 185, 129, 0.1)";
+                verdictBox.style.borderColor = color;
+                verdictTitle.style.color = color;
+            } else if(aiData.triage === "URGENT") {
+                const color = "#ef4444"; 
+                headerStatus.style.color = color;
+                scoreValue.style.color = color;
+                mainCard.style.borderLeftColor = color;
+                verdictBox.style.background = "rgba(239, 68, 68, 0.1)";
+                verdictBox.style.borderColor = color;
+                verdictTitle.style.color = color;
+            } else {
+                const color = "#f59e0b"; 
+                headerStatus.style.color = color;
+                scoreValue.style.color = color;
+                mainCard.style.borderLeftColor = color;
+                verdictBox.style.background = "rgba(245, 158, 11, 0.1)";
+                verdictBox.style.borderColor = color;
+                verdictTitle.style.color = color;
+            }
+
+            dummyCards.forEach(card => card.style.display = "none");
+        }
+    </script>
+</body>
+</html>
