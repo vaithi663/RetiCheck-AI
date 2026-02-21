@@ -3,4 +3,5 @@ numpy
 Pillow
 tensorflow
 gunicorn
+h5py
 
