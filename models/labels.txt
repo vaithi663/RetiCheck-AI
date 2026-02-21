@@ -1,3 +1,0 @@
-0 Normal
-1 Diabetic Retinopathy
-2 Glaucoma
