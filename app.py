@@ -25,42 +25,39 @@ cdss_data = {
 }
 
 # 2. XAI Heatmap Functions
-# 2. XAI Heatmap Functions (ULTRA FAST MODE FOR RENDER FREE TIER)
-def generate_robust_heatmap(img_array, model, class_index, patch_size=56, step=56):
+# 2. XAI Heatmap Functions (ORIGINAL REAL AI MODE - FOR 16GB RAM)
+def generate_robust_heatmap(img_array, model, class_index, patch_size=32, step=32):
     try:
         base_pred = model.predict(img_array, verbose=0)[0][class_index]
         patches, coords = [], []
         img_size = 224
         
-        # Bigger patches = Extremely fast scanning (16 scans instead of 49 or 784)
         for y in range(0, img_size, step):
             for x in range(0, img_size, step):
                 y_end, x_end = min(y + patch_size, img_size), min(x + patch_size, img_size)
-                if (y_end - y) < 10 or (x_end - x) < 10: continue
+                if (y_end - y) < 4 or (x_end - x) < 4: continue
                 
                 occ_img = img_array.copy()
-                occ_img[0, y:y_end, x:x_end, :] = -1 # Blackout region
+                occ_img[0, y:y_end, x:x_end, :] = -1 
                 patches.append(occ_img[0])
                 coords.append((y, y_end, x, x_end))
                 
         if not patches: return None
         
-        # TURBO FIX: Predict one by one. ZERO RAM Spike and Super Fast!
+        # 16GB RAM இருப்பபதால் தைரியமாக பேட்ச் முறையில் ஒரிஜினல் AI-யை ரன் செய்யலாம்
+        preds = model.predict(np.array(patches), batch_size=16, verbose=0)[:, class_index]
+        
         heatmap = np.zeros((img_size, img_size))
         for i, (y, y_end, x, x_end) in enumerate(coords):
-            p_arr = np.expand_dims(patches[i], axis=0)
-            pred = model.predict(p_arr, verbose=0)[0][class_index]
-            drop = base_pred - pred
+            drop = base_pred - preds[i]
             if drop > 0.01: 
                 heatmap[y:y_end, x:x_end] += drop
                 
         heatmap = np.maximum(heatmap, 0)
         max_val = np.max(heatmap)
-        if max_val > 0: 
-            heatmap /= max_val
+        if max_val > 0: heatmap /= max_val
             
-        # Extra blur to make the large fast patches look like a smooth HD medical image
-        heatmap_img = Image.fromarray(np.uint8(255 * heatmap)).filter(ImageFilter.GaussianBlur(radius=15))
+        heatmap_img = Image.fromarray(np.uint8(255 * heatmap)).filter(ImageFilter.GaussianBlur(radius=8))
         return np.array(heatmap_img) / 255.0
     except Exception as e: 
         print("Heatmap Error:", e)
@@ -140,4 +137,5 @@ def predict():
 if __name__ == '__main__':
 
     app.run(debug=True, port=5000)
+
 
