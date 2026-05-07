@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetiCheck AI | Contact Support</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: url("{{ url_for('static', filename='eye-bg.jpg') }}") center/cover fixed no-repeat; 
+            background-color: #0b1820; color: white; min-height: 100vh; overflow-x: hidden; position: relative;
+        }
+
+        .bg-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(8, 20, 25, 0.95) 0%, rgba(15, 35, 45, 0.85) 100%); z-index: -1;
+        }
+        
+        .navbar { 
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 50px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+        }
+        .logo { font-size: 26px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px; letter-spacing: 1px; }
+        .logo span { color: #00f2fe; font-size: 30px; } 
+        .nav-links { display: flex; gap: 40px; list-style: none; }
+        .nav-links li a { text-decoration: none; color: #d1d5db; font-weight: 500; font-size: 15px; transition: 0.3s; cursor: pointer; }
+        .nav-links li a:hover, .nav-links li a.active { color: #00f2fe; border-bottom: 2px solid #00f2fe; padding-bottom: 5px; }
+        
+        .btn-nav { 
+            background: transparent; 
+            color: #00f2fe; 
+            padding: 10px 25px; 
+            border: 1px solid #00f2fe; 
+            font-weight: 600; 
+            font-size: 14px; 
+            cursor: pointer; 
+            transition: 0.4s; 
+            border-radius: 8px; 
+        }
+        .btn-nav:hover { 
+            background: rgba(0, 242, 254, 0.1); 
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3); 
+        }
+
+        .contact-container { padding: 60px 10%; display: flex; flex-direction: column; align-items: center; }
+        .contact-header { text-align: center; margin-bottom: 50px; }
+        .contact-header h1 { font-size: 38px; font-weight: 800; color: #ffffff; margin-bottom: 15px; }
+        .contact-header h1 span { color: #00f2fe; }
+        .contact-header p { font-size: 15px; color: #9ca3af; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+
+        .contact-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; width: 100%; max-width: 1100px; }
+
+        .info-section { display: flex; flex-direction: column; gap: 20px; }
+        .info-card { 
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); 
+            padding: 30px; border-radius: 15px; display: flex; align-items: flex-start; gap: 20px; transition: 0.3s;
+        }
+        .info-card:hover { border-color: #00f2fe; background: rgba(0, 242, 254, 0.02); transform: translateY(-3px); }
+        .info-icon { font-size: 28px; background: rgba(0, 242, 254, 0.1); width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #00f2fe; }
+        .info-text h3 { font-size: 18px; color: #ffffff; margin-bottom: 8px; font-weight: 600; }
+        .info-text p { font-size: 14px; color: #9ca3af; line-height: 1.6; }
+
+        .form-section { 
+            background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 242, 254, 0.2); 
+            padding: 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        .input-group { margin-bottom: 25px; }
+        .input-group label { display: block; font-size: 12px; color: #00f2fe; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group input, .input-group textarea { 
+            width: 100%; padding: 15px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 10px; font-size: 14px; color: #ffffff; outline: none; transition: 0.3s; font-family: 'Poppins', sans-serif;
+        }
+        .input-group input:focus, .input-group textarea:focus { border-color: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); background: rgba(0,0,0,0.5); }
+        .input-group textarea { resize: vertical; min-height: 120px; }
+        
+        .btn-submit { 
+            background: linear-gradient(135deg, #00f2fe, #4facfe); color: #0b1820; padding: 16px 30px; border: none; 
+            font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.4s; border-radius: 10px; width: 100%; 
+            text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 5px 20px rgba(0, 242, 254, 0.3);
+        }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5); }
+
+        @media (max-width: 900px) { .contact-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-overlay"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 12px;">
+                <path d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12" stroke="#00f2fe" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.3"/>
+                <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22M12 2C12 2 8 6 8 12C8 18 12 22 12 22M2 12H22" stroke="#00f2fe" stroke-width="1" stroke-opacity="0.15"/>
+                <path d="M8 12.5L11 15.5L18.5 8.5" stroke="#00f2fe" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            RetiCheck AI
+        </div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/about">How it Works</a></li>
+            <li><a href="/services">Features</a></li>
+            <li><a href="/contact" class="active">Contact</a></li>
+        </ul>
+        <button class="btn-nav" onclick="window.location.href='/login'">Login</button>
+    </nav>
+
+    <div class="contact-container">
+        <div class="contact-header">
+            <h1>Get in <span>Touch</span></h1>
+            <p>Have questions about integrating our CDSS into your clinical workflow? Our AI support team and medical liaisons are here to help.</p>
+        </div>
+
+        <div class="contact-grid">
+            <div class="info-section">
+                <div class="info-card">
+                    <div class="info-icon">✉️</div>
+                    <div class="info-text">
+                        <h3>Email Support</h3>
+                        <p>support@reticheck.ai<br>research@reticheck.ai</p>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">📞</div>
+                    <div class="info-text">
+                        <h3>Direct Hotline</h3>
+                        <p>+91 98765 43210<br>Mon-Fri, 9am - 6pm (IST)</p>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">🏢</div>
+                    <div class="info-text">
+                        <h3>Headquarters</h3>
+                        <p>📍 RetiCheck AI Labs,<br>Tidel Park, IT Expressway,Taramani, Chennai - 600113</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="input-group">
+                    <label>Doctor / Clinic Name</label>
+                    <input type="text" placeholder="Enter your name or institution">
+                </div>
+                <div class="input-group">
+                    <label>Official Email</label>
+                    <input type="email" placeholder="doctor@hospital.com">
+                </div>
+                <div class="input-group">
+                    <label>Inquiry Details</label>
+                    <textarea placeholder="How can we assist you with the AI diagnostic tool?"></textarea>
+                </div>
+                <button class="btn-submit" onclick="alert('Message Sent Successfully! Our team will contact you within 24 hours.')">Send Message</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

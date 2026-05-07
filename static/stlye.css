@@ -1,0 +1,68 @@
+/* Overall Theme */
+body {
+    background-color: #0f172a; /* Deep Dark Blue */
+    color: #f8fafc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+}
+
+.center-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Card Styling */
+.login-card, .form-card {
+    background: #1e293b;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    width: 100%;
+    max-width: 450px;
+}
+
+.form-card { max-width: 600px; margin: 40px auto; }
+
+/* Input Styling */
+.input-group { margin-bottom: 20px; text-align: left; }
+label { display: block; margin-bottom: 8px; font-size: 14px; color: #94a3b8; }
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    background: #334155;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    color: white;
+    box-sizing: border-box;
+}
+
+/* Buttons */
+.primary-btn, .next-btn {
+    width: 100%;
+    padding: 14px;
+    background: #3b82f6;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.primary-btn:hover { background: #2563eb; }
+
+/* Navigation */
+.navbar {
+    background: #1e293b;
+    padding: 15px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #334155;
+}
+
+.form-row { display: flex; gap: 20px; }
+.badge { background: #10b981; padding: 2px 8px; border-radius: 4px; font-size: 12px; }

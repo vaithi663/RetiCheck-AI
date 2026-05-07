@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetiCheck AI | Global Health Vision</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: url("{{ url_for('static', filename='eye-bg.jpg') }}") center/cover fixed no-repeat; 
+            background-color: #0b1820; color: white; min-height: 100vh; overflow-x: hidden; position: relative;
+        }
+
+        .bg-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(8, 20, 25, 0.96) 0%, rgba(15, 35, 45, 0.88) 100%);
+            z-index: -1;
+        }
+        
+        .navbar { 
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 50px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+        }
+        .logo { font-size: 26px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px; letter-spacing: 1px; }
+        .logo span { color: #00f2fe; font-size: 30px; } 
+        .nav-links { display: flex; gap: 40px; list-style: none; }
+        .nav-links li a { text-decoration: none; color: #d1d5db; font-weight: 500; font-size: 15px; transition: 0.3s; cursor: pointer; }
+        .nav-links li a:hover, .nav-links li a.active { color: #00f2fe; }
+        .btn-nav { background: transparent; color: #00f2fe; padding: 10px 25px; border: 1px solid #00f2fe; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.4s; border-radius: 8px; }
+        .btn-nav:hover { background: rgba(0, 242, 254, 0.1); box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3); }
+
+    
+        .about-container { display: flex; justify-content: center; padding: 60px 20px 100px 20px; }
+        .about-card { 
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(25px); border-radius: 20px; 
+            padding: 60px; width: 100%; max-width: 1200px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+            border: 1px solid rgba(0, 242, 254, 0.15);
+        }
+
+        .page-title { text-align: center; margin-bottom: 50px; }
+        .page-title h1 { font-size: 45px; font-weight: 800; color: #ffffff; margin-bottom: 15px; letter-spacing: -1px; }
+        .page-title h1 span { color: #00f2fe; }
+        .page-title p { font-size: 16px; color: #9ca3af; max-width: 800px; margin: 0 auto; line-height: 1.8; }
+
+        .section-heading { font-size: 30px; font-weight: 700; color: #ffffff; margin: 60px 0 30px 0; text-align: center; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 60px; }
+        .stat-card { background: rgba(0,0,0,0.4); padding: 40px 20px; border-radius: 15px; text-align: center; border-bottom: 3px solid #00f2fe; transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); background: rgba(0, 242, 254, 0.05); }
+        .stat-card h2 { font-size: 45px; color: #00f2fe; font-weight: 800; margin-bottom: 10px; }
+        .stat-card h4 { font-size: 16px; color: #ffffff; margin-bottom: 10px; }
+        .stat-card p { font-size: 13px; color: #9ca3af; line-height: 1.6; }
+
+        .mission-vision { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 60px; }
+        .mv-box { background: rgba(0,0,0,0.3); padding: 40px; border-radius: 15px; border-left: 4px solid #00f2fe; }
+        .mv-box h2 { font-size: 22px; color: #ffffff; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; }
+        .mv-box svg { width: 24px; height: 24px; stroke: #00f2fe; }
+        .mv-box p { color: #d1d5db; font-size: 14px; line-height: 1.8; }
+
+        
+        .workflow-section { margin: 60px 0; padding: 40px; background: rgba(0,0,0,0.2); border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .workflow-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 30px; }
+        .workflow-step { text-align: center; position: relative; }
+        .workflow-step:not(:last-child)::after { content: '➔'; position: absolute; right: -25px; top: 20%; font-size: 24px; color: rgba(0, 242, 254, 0.4); }
+        .step-num { width: 50px; height: 50px; border: 2px solid #00f2fe; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; color: #00f2fe; font-weight: 700; font-size: 20px; }
+        .workflow-step h3 { font-size: 18px; margin-bottom: 10px; }
+        .workflow-step p { font-size: 13px; color: #9ca3af; line-height: 1.6; }
+
+        .validation-box { background: linear-gradient(135deg, rgba(0, 242, 254, 0.05), rgba(11, 24, 32, 0.9)); padding: 40px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.2); display: flex; gap: 30px; align-items: center; margin-bottom: 60px; }
+        .val-icon { flex: 0.5; text-align: center; }
+        .val-icon svg { width: 80px; height: 80px; stroke: #00f2fe; opacity: 0.8; }
+        .val-content { flex: 2; }
+        .val-content h3 { font-size: 22px; color: #ffffff; margin-bottom: 15px; }
+        .val-content p { font-size: 14px; color: #d1d5db; line-height: 1.8; margin-bottom: 15px; }
+        .val-tags { display: flex; gap: 15px; flex-wrap: wrap; }
+        .val-tag { background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; font-size: 12px; color: #00f2fe; border: 1px solid rgba(0, 242, 254, 0.3); }
+
+        .cap-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 60px; }
+        .cap-card { background: rgba(255,255,255,0.02); padding: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+        .cap-card:hover { transform: translateY(-5px); border-color: rgba(0, 242, 254, 0.4); }
+        .cap-card h3 { font-size: 17px; color: #ffffff; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .cap-card h3 svg { width: 22px; height: 22px; stroke: #00f2fe; }
+        .cap-card p { font-size: 13px; color: #9ca3af; line-height: 1.6; }
+
+        .roadmap-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 60px; }
+        .road-card { background: rgba(0,0,0,0.3); padding: 25px; border-radius: 10px; border-top: 3px solid #4facfe; position: relative; }
+        .road-card h4 { color: #ffffff; font-size: 15px; margin-bottom: 10px; }
+        .road-card p { color: #9ca3af; font-size: 12px; line-height: 1.5; }
+        .phase-badge { position: absolute; top: -12px; left: 20px; background: #0b1820; border: 1px solid #4facfe; color: #4facfe; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+
+        .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .faq-card { background: rgba(255,255,255,0.02); padding: 25px; border-radius: 10px; border-left: 2px solid rgba(255,255,255,0.1); }
+        .faq-card h4 { color: #00f2fe; font-size: 15px; margin-bottom: 10px; }
+        .faq-card p { color: #d1d5db; font-size: 13px; line-height: 1.6; }
+
+        #retibot-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
+        #retibot-toggle { width: 60px; height: 60px; background: rgba(15, 30, 40, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50%; box-shadow: 0 8px 25px rgba(0,0,0,0.3); cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        #retibot-window { width: 380px; height: 600px; background: rgba(11, 24, 32, 0.25); backdrop-filter: blur(3px); border-radius: 20px; display: none; flex-direction: column; border: 1px solid rgba(0, 242, 254, 0.2); overflow: hidden; }
+        .retibot-header { background: rgba(0,0,0,0.1); padding: 25px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .retibot-badge { background: rgba(0, 242, 254, 0.1); color: #00f2fe; padding: 8px 15px; border-radius: 8px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .retibot-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .retibot-input-area { padding: 15px; background: rgba(0,0,0,0.1); display: flex; gap: 10px; }
+        .retibot-input-area input { flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 25px; outline: none; font-size: 13px; }
+        .retibot-send { background: #00f2fe; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        .msg-row { display: flex; width: 100%; }
+        .msg-user { justify-content: flex-end; }
+        .msg-bot { justify-content: flex-start; }
+        .msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 15px; font-size: 13px; line-height: 1.5; }
+        .msg-user .msg-bubble { background: linear-gradient(135deg, #00f2fe, #4facfe); color: #0b1820; font-weight: 500; border-bottom-right-radius: 3px; }
+        .msg-bot .msg-bubble { background: rgba(255, 255, 255, 0.05); color: #ffffff; border-bottom-left-radius: 3px; backdrop-filter: blur(2px); border: 1px solid rgba(255,255,255,0.15); }
+
+        @media (max-width: 900px) {
+            .stats-grid, .mission-vision, .cap-grid, .workflow-grid, .roadmap-grid, .faq-grid { grid-template-columns: 1fr; }
+            .workflow-step:not(:last-child)::after { display: none; }
+            .ethical-flex, .validation-box { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-overlay"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+            RetiCheck AI
+        </div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/about" class="active">How it Works</a></li>
+            <li><a href="/services">Features</a></li>
+            <li><a href="/contact">Contact</a></li>
+        </ul>
+        <button class="btn-nav" onclick="window.location.href='/login'">Login</button>
+    </nav>
+
+    <div class="about-container">
+        <div class="about-card">
+            
+            <div class="page-title">
+                <h1>Bridging Technology with <span>Clinical Precision</span></h1>
+                <p>RetiCheck AI is a next-generation diagnostic ecosystem designed to empower ophthalmologists. We focus on visual transparency, rapid ocular risk assessment, and scalable healthcare solutions.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h2>422M+</h2>
+                    <h4>Global Diabetic Population</h4>
+                    <p>Patients at immediate risk of developing Diabetic Retinopathy, leading to irreversible blindness if unscreened.</p>
+                </div>
+                <div class="stat-card">
+                    <h2>80%</h2>
+                    <h4>Preventable Vision Loss</h4>
+                    <p>A staggering majority of global vision impairment cases can be prevented through early detection and intervention.</p>
+                </div>
+                <div class="stat-card">
+                    <h2>< 2s</h2>
+                    <h4>Diagnostic Turnaround</h4>
+                    <p>Our platform processes complex fundus imagery and returns a diagnostic confidence score almost instantly.</p>
+                </div>
+            </div>
+
+            <div class="mission-vision">
+                <div class="mv-box">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                        Global Mission
+                    </h2>
+                    <p>To deliver advanced diagnostic access to resource-limited healthcare environments, ensuring that early signs of retinal disease are caught before irreversible vision loss occurs. We strive to make expert-level screening accessible to all.</p>
+                </div>
+                <div class="mv-box">
+                    <h2>
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Strategic Vision
+                    </h2>
+                    <p>To set a global benchmark for automated ophthalmic screening by integrating Explainable AI within the clinical workflow, fostering absolute trust between medical practitioners and diagnostic technology.</p>
+                </div>
+            </div>
+
+            <div class="validation-box">
+                <div class="val-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <div class="val-content">
+                    <h3>Rigorous Clinical Validation</h3>
+                    <p>Our diagnostic engine is built upon the foundation of extensive clinical validation. Trained on highly diverse, anonymized global retinal datasets, the system is engineered to recognize microscopic pathologies across varying demographics, eye pigmentations, and imaging conditions. This ensures that our predictions remain robust, unbiased, and clinically relevant in real-world scenarios.</p>
+                    <div class="val-tags">
+                        <span class="val-tag">Diverse Demographics</span>
+                        <span class="val-tag">Noise Filtering</span>
+                        <span class="val-tag">High Generalization</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="workflow-section">
+                <h2 class="section-heading" style="margin-top: 0;">Clinical Deployment Workflow</h2>
+                <div class="workflow-grid">
+                    <div class="workflow-step">
+                        <div class="step-num">1</div>
+                        <h3>Imaging</h3>
+                        <p>Upload a standard non-mydriatic fundus retinal scan securely to our encrypted cloud interface.</p>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num">2</div>
+                        <h3>Neural Analysis</h3>
+                        <p>Real-time deep feature extraction to identify vascular and structural retinal anomalies.</p>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-num">3</div>
+                        <h3>Triage Output</h3>
+                        <p>Immediate delivery of a risk-stratified diagnostic report with visual proof heatmaps.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="section-heading">Platform Architecture Capabilities</h2>
+            <div class="cap-grid">
+                <div class="cap-card">
+                    <h3><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> Mass Screening Ready</h3>
+                    <p>Designed for mass screening programs where thousands of patients can be evaluated for severe diseases efficiently and accurately.</p>
+                </div>
+                <div class="cap-card">
+                    <h3><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Feature Attribution (XAI)</h3>
+                    <p>Proprietary occlusion-based mapping techniques highlight microscopic ocular pathologies that the naked human eye might overlook.</p>
+                </div>
+                <div class="cap-card">
+                    <h3><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> EHR Integration</h3>
+                    <p>The integrated database architecture supports continuous patient monitoring to track disease progression over months or years.</p>
+                </div>
+                <div class="cap-card">
+                    <h3><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Scalable Infrastructure</h3>
+                    <p>Enterprise-ready design that can be deployed across multiple clinic nodes while maintaining synchronized diagnostic standards.</p>
+                </div>
+            </div>
+
+            <h2 class="section-heading">Our Future Roadmap</h2>
+            <div class="roadmap-grid">
+                <div class="road-card">
+                    <span class="phase-badge">Phase 1</span>
+                    <h4>Core Deployment</h4>
+                    <p>Establishing the foundational diagnostic engine for Diabetic Retinopathy and Glaucoma detection.</p>
+                </div>
+                <div class="road-card">
+                    <span class="phase-badge">Phase 2</span>
+                    <h4>Mobile Integration</h4>
+                    <p>Developing secure mobile-responsive portals for remote doctors and rural eye camps.</p>
+                </div>
+                <div class="road-card">
+                    <span class="phase-badge">Phase 3</span>
+                    <h4>Disease Expansion</h4>
+                    <p>Training the system to detect Age-Related Macular Degeneration (AMD) and Cataracts.</p>
+                </div>
+                <div class="road-card">
+                    <span class="phase-badge">Phase 4</span>
+                    <h4>Predictive Analytics</h4>
+                    <p>Utilizing patient history to forecast visual degradation timelines and suggest interventions.</p>
+                </div>
+            </div>
+
+            <h2 class="section-heading">Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-card">
+                    <h4>Is this system meant to replace doctors?</h4>
+                    <p>Absolutely not. RetiCheck AI is a Clinical Decision Support System (CDSS) designed to assist ophthalmologists, not replace their clinical judgment.</p>
+                </div>
+                <div class="faq-card">
+                    <h4>How is patient data secured?</h4>
+                    <p>We use localized SQLite processing and environment-level protections. No unauthorized personnel can access the patient database without the Admin PIN.</p>
+                </div>
+                <div class="faq-card">
+                    <h4>What is a Grad-CAM Heatmap?</h4>
+                    <p>It is an Explainable AI (XAI) feature that visually highlights the specific areas of the retina that caused the AI to predict a disease, adding a layer of trust.</p>
+                </div>
+                <div class="faq-card">
+                    <h4>Can patients upload smartphone photos?</h4>
+                    <p>No. For accurate clinical predictions, the system requires standard fundus imagery taken by professional non-mydriatic retinal cameras.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="retibot-container">
+        <div id="retibot-window">
+            <div class="retibot-header">
+                <span class="retibot-badge">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    &nbsp;RetiBot Support
+                </span>
+            </div>
+            <div class="retibot-body" id="retibot-chat-history">
+                <div class="msg-row msg-bot">
+                    <div class="msg-bubble">Hello there! 👋 I am RetiBot. How can I assist you with our platform vision today?</div>
+                </div>
+            </div>
+            <div class="retibot-input-area">
+                <input type="text" id="retibot-input" placeholder="Type here..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <button class="retibot-send" onclick="sendMessage()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+        <button id="retibot-toggle" onclick="const win=document.getElementById('retibot-window'); win.style.display=(win.style.display==='none'||win.style.display==='')?'flex':'none'">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z"/><circle cx="12" cy="12" r="3.5" stroke="#00f2fe" stroke-width="2.5"/></svg>
+        </button>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('retibot-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            const history = document.getElementById('retibot-chat-history');
+            history.innerHTML += `<div class="msg-row msg-user"><div class="msg-bubble">${msg}</div></div>`;
+            input.value = '';
+            history.scrollTop = history.scrollHeight;
+            try {
+                const response = await fetch('/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: msg}) });
+                const data = await response.json();
+                setTimeout(() => {
+                    history.innerHTML += `<div class="msg-row msg-bot"><div class="msg-bubble">${data.reply}</div></div>`;
+                    history.scrollTop = history.scrollHeight;
+                }, 500);
+            } catch (err) { }
+        }
+    </script>
+</body>
+</html>

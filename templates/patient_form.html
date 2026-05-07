@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetiCheck AI | Patient Registration</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: url("{{ url_for('static', filename='eye-bg.jpg') }}") center/cover fixed no-repeat; 
+            background-color: #0b1820; 
+            color: white; 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+            position: relative;
+        }
+
+        .bg-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(8, 20, 25, 0.9) 0%, rgba(15, 35, 45, 0.8) 100%);
+            z-index: -1;
+        }
+        
+        /* 🔥 UNIFIED AUTHENTICATED NAVBAR */
+        .navbar { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(15px); 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 50px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 26px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px; letter-spacing: 1px; }
+        .logo span { color: #00f2fe; font-size: 30px; } 
+        .nav-links { display: flex; gap: 40px; list-style: none; }
+        .nav-links li a { text-decoration: none; color: #d1d5db; font-weight: 500; font-size: 15px; transition: 0.3s; cursor: pointer; }
+        .nav-links li a:hover, .nav-links li a.active { color: #00f2fe; border-bottom: 2px solid #00f2fe; padding-bottom: 5px; }
+        
+        .btn-nav { 
+            background: transparent; 
+            color: #00f2fe; 
+            padding: 10px 25px; 
+            border: 1px solid #00f2fe; 
+            font-weight: 600; 
+            font-size: 14px; 
+            cursor: pointer; 
+            transition: 0.4s; 
+            border-radius: 8px; 
+        }
+        .btn-nav:hover { 
+            background: rgba(0, 242, 254, 0.1); 
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3); 
+        }
+
+        .form-container { display: flex; justify-content: center; align-items: center; padding: 60px 20px; min-height: calc(100vh - 90px); }
+        
+        .form-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(25px); 
+            border-radius: 20px; 
+            padding: 50px; 
+            width: 100%; 
+            max-width: 850px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            position: relative;
+        }
+
+        .form-header { margin-bottom: 40px; text-align: center; }
+        .form-header h1 { font-size: 32px; font-weight: 800; color: #ffffff; margin-bottom: 10px; letter-spacing: 1px; }
+        .form-header p { font-size: 14px; color: #9ca3af; }
+
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
+        .input-group { display: flex; flex-direction: column; position: relative; }
+        .input-group.full-width { grid-column: span 2; }
+        
+        .input-group label { font-size: 13px; color: #9ca3af; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group input, .input-group select, .input-group textarea { 
+            padding: 15px 20px; 
+            background: rgba(0,0,0,0.3); 
+            border: 1px solid rgba(255,255,255,0.15); 
+            border-radius: 10px; 
+            font-size: 14px; 
+            color: #ffffff; 
+            outline: none; 
+            transition: 0.3s; 
+            font-family: 'Poppins', sans-serif;
+        }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { 
+            border-color: #00f2fe; 
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); 
+            background: rgba(0,0,0,0.5); 
+        }
+        .input-group select option { background: #0b1820; color: white; }
+        .input-group textarea { resize: vertical; min-height: 100px; }
+
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #0b1d26 inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            border: 1px solid rgba(0, 242, 254, 0.5) !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        input[type="number"] {
+            color-scheme: dark;
+        }
+    
+        .error-text { color: #ef4444; font-size: 11px; margin-top: 6px; display: none; font-weight: 600; letter-spacing: 0.5px; }
+        .input-error { border-color: #ef4444 !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.2) !important; background: rgba(239, 68, 68, 0.05) !important; }
+
+        .btn-submit { 
+            background: linear-gradient(135deg, #00f2fe, #4facfe); 
+            color: #0b1820; 
+            padding: 18px 30px; 
+            border: none; 
+            font-weight: 800; 
+            font-size: 15px; 
+            cursor: pointer; 
+            transition: 0.4s; 
+            border-radius: 10px; 
+            width: 100%; 
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 20px rgba(0, 242, 254, 0.3);
+        }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5); }
+
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 15px; }
+        .custom-toast { background: rgba(11, 24, 32, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); color: #ffffff; padding: 16px 20px; border-radius: 10px; font-size: 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInRight 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards; min-width: 280px; }
+        .toast-success { border-left: 4px solid #10b981; }
+        .toast-warning { border-left: 4px solid #f59e0b; }
+        @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOutUp { to { opacity: 0; transform: translateY(-20px); } }
+
+        #retibot-container { 
+            position: fixed; bottom: 30px; right: 30px; z-index: 9999; 
+            font-family: 'Poppins', sans-serif;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 15px;
+        }
+
+        #retibot-toggle { 
+            width: 60px; height: 60px; 
+            background: rgba(15, 30, 40, 0.95); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 50%; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 15px rgba(0, 242, 254, 0.1); 
+            cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; 
+            display: flex; justify-content: center; align-items: center; 
+        }
+        #retibot-toggle:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(0, 242, 254, 0.3); }
+
+        #retibot-window { 
+            width: 380px; max-height: calc(100vh - 120px); height: 600px; 
+            background: rgba(11, 24, 32, 0.25); 
+            backdrop-filter: blur(3px); 
+            -webkit-backdrop-filter: blur(3px);
+            border-radius: 20px; overflow: hidden; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.15); 
+            display: none; flex-direction: column; 
+            border: 1px solid rgba(0, 242, 254, 0.2); 
+        }
+
+        .retibot-header { background: rgba(0,0,0,0.1); color: white; padding: 25px 20px; flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .retibot-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        
+        .retibot-badge { 
+            background: rgba(0, 242, 254, 0.1); color: #00f2fe; 
+            padding: 8px 15px; border-radius: 8px; font-size: 13px; font-weight: 700; 
+            border: 1px solid rgba(0, 242, 254, 0.2); 
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.1);
+        }
+        
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+        .action-btn { background: transparent; border: none; color: #9ca3af; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; padding: 5px; border-radius: 5px; }
+        .action-btn:hover { color: #00f2fe; background: rgba(255,255,255,0.05); }
+
+        .retibot-header p { font-size: 13px; color: #9ca3af; line-height: 1.5; margin-top: 5px; }
+        
+        .retibot-body { flex: 1; padding: 25px 20px; overflow-y: auto; background: transparent; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        
+        .retibot-input-area { padding: 15px; background: rgba(0,0,0,0.1); border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .retibot-input-area input { flex: 1; padding: 12px 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 25px; font-size: 13px; outline: none; transition: 0.3s; font-family: 'Poppins', sans-serif;}
+        .retibot-input-area input::placeholder { color: #9ca3af; }
+        .retibot-input-area input:focus { border-color: #00f2fe; background: rgba(255,255,255,0.1); box-shadow: 0 0 10px rgba(0,242,254,0.1); }
+        
+        .retibot-send { background: #00f2fe; color: #0b1820; border: none; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; flex-shrink: 0; }
+        .retibot-send:hover { background: #00c6d1; transform: scale(1.05); box-shadow: 0 0 15px rgba(0, 242, 254, 0.4); }
+        .retibot-send svg { margin-left: -2px; }
+        
+        .msg-row { display: flex; width: 100%; }
+        .msg-user { justify-content: flex-end; }
+        .msg-bot { justify-content: flex-start; }
+        .msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 15px; font-size: 13px; line-height: 1.5; }
+        .msg-user .msg-bubble { background: linear-gradient(135deg, #00f2fe, #4facfe); color: #0b1820; font-weight: 500; border-bottom-right-radius: 3px; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2); }
+        .msg-bot .msg-bubble { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #ffffff; border-bottom-left-radius: 3px; backdrop-filter: blur(2px); }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div class="bg-overlay"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 12px;">
+                <path d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12" stroke="#00f2fe" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.3"/>
+                <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22M12 2C12 2 8 6 8 12C8 18 12 22 12 22M2 12H22" stroke="#00f2fe" stroke-width="1" stroke-opacity="0.15"/>
+                <path d="M8 12.5L11 15.5L18.5 8.5" stroke="#00f2fe" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            RetiCheck AI
+        </div>
+        <ul class="nav-links">
+            <li><a href="/" onclick="return confirmExit(event)">Home</a></li>
+            <li><a href="/patient_form" class="active">New Patient</a></li>
+            <li><a href="/upload" onclick="return blockNavigation(event)">New Scan</a></li>
+            <li>
+                <a href="/database" onclick="return blockAndCheckDatabase(event)" style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 9V7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7V9H6C4.89543 9 4 9.89543 4 11V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V11C20 9.89543 19.1046 9 18 9H17ZM9 7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7V9H9V7ZM18 20H6V11H18V20ZM12 13C11.1716 13 10.5 13.6716 10.5 14.5C10.5 15.3284 11.1716 16 12 16C12.8284 16 13.5 15.3284 13.5 14.5C13.5 13.6716 12.8284 13 12 13Z" fill="currentColor"/>
+                    </svg>
+                    Patient Database
+                </a>
+            </li>
+        </ul>
+        <button class="btn-nav" onclick="window.location.href='/'">Logout</button>
+    </nav>
+
+    <div class="form-container">
+        <div class="form-card">
+            <div class="form-header">
+                <h1>Patient Registration</h1>
+                <p>Please enter the clinical details before proceeding to the AI retinal scan.</p>
+            </div>
+
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Patient ID (Auto-Generated)</label>
+                    <input type="text" id="patientID" value="RC-2026-889" readonly style="color: #00f2fe; font-weight: 700; background: rgba(0, 242, 254, 0.05);">
+                </div>
+                
+                <div class="input-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="patientName" placeholder="Enter patient name">
+                    <span class="error-text" id="nameError">⚠️ Please enter the patient's full name.</span>
+                </div>
+                
+                <div class="input-group">
+                    <label>Age *</label>
+                    <input type="number" id="patientAge" placeholder="Enter age">
+                    <span class="error-text" id="ageError">⚠️ Please enter the patient's age.</span>
+                </div>
+                
+                <div class="input-group">
+                    <label>Gender</label>
+                    <select id="patientGender">
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="input-group full-width">
+                    <label>Clinical Medical History (Optional)</label>
+                    <textarea id="patientHistory" placeholder="E.g. Type 2 Diabetes, Hypertension, previous ocular surgeries..."></textarea>
+                </div>
+            </div>
+
+            <button class="btn-submit" onclick="proceedToScan()">Save Data & Proceed to Scan</button>
+        </div>
+    </div>
+
+    <div id="retibot-container">
+        <div id="retibot-window">
+            <div class="retibot-header">
+                <div class="retibot-top-bar">
+                    <span class="retibot-badge">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        &nbsp;RetiBot Support
+                    </span>
+                    <div class="header-actions">
+                        <button class="action-btn" onclick="toggleChat()" title="Close">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <p>Typically replies instantly. Feel free to ask any diagnostic-related queries.</p>
+            </div>
+
+            <div class="retibot-body" id="retibot-chat-history">
+                <div class="msg-row msg-bot">
+                    <div class="msg-bubble">Hello there! 👋 I am RetiBot, your AI Assistant. How can I help you today?</div>
+                </div>
+            </div>
+
+            <div class="retibot-input-area">
+                <input type="text" id="retibot-input" placeholder="Type your message here..." onkeypress="handleEnter(event)">
+                <button class="retibot-send" onclick="sendMessage()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <button id="retibot-toggle" onclick="toggleChat()">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3.5" stroke="#00f2fe" stroke-width="2.5" fill="none"/>
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        function showToast(message, type = 'warning') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `custom-toast toast-${type}`;
+            
+            let icon = '';
+            if(type === 'success') {
+                icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+            } else {
+                icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+            }
+
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOutUp 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        let formSubmitted = false;
+
+        function blockNavigation(event) {
+            if(!formSubmitted) {
+                event.preventDefault(); 
+                showToast("Action Required: Please fill out the Patient Registration form before proceeding.", "warning");
+                return false;
+            }
+            return true;
+        }
+
+        function blockAndCheckDatabase(event) {
+            if(!formSubmitted) {
+                event.preventDefault(); 
+                showToast("Action Required: Please fill out the Patient Registration form before proceeding.", "warning");
+                return false;
+            }
+            return true;
+        }
+
+        function confirmExit(event) {
+            if(!formSubmitted) {
+                const leave = confirm("You haven't registered the patient yet. All entered data will be lost. Are you sure you want to exit?");
+                if(!leave) event.preventDefault();
+            }
+        }
+
+        // 🔥 ONLY THE LOCAL STORAGE FUNCTION WAS MODIFIED HERE 🔥
+        function proceedToScan() {
+            const nameInput = document.getElementById('patientName');
+            const ageInput = document.getElementById('patientAge');
+            const nameError = document.getElementById('nameError');
+            const ageError = document.getElementById('ageError');
+            
+            let isValid = true;
+
+            if (nameInput.value.trim() === "") {
+                nameInput.classList.add('input-error');
+                nameError.style.display = "block";
+                isValid = false;
+            }
+
+            if (ageInput.value.trim() === "") {
+                ageInput.classList.add('input-error');
+                ageError.style.display = "block";
+                isValid = false;
+            }
+
+            if (isValid) {
+                // Save data to LocalStorage for records.html
+                const pId = document.getElementById('patientID').value;
+                const pName = document.getElementById('patientName').value;
+                const pAge = document.getElementById('patientAge').value;
+                const pGender = document.getElementById('patientGender').value;
+                const pHistory = document.getElementById('patientHistory').value;
+                const today = new Date().toLocaleDateString('en-GB');
+
+                let records = JSON.parse(localStorage.getItem('reticheck_patients_data')) || [];
+                records.push({ date: today, id: pId, name: pName, age: pAge, gender: pGender, history: pHistory });
+                localStorage.setItem('reticheck_patients_data', JSON.stringify(records));
+
+                formSubmitted = true; 
+                showToast("Patient Registered Successfully! Redirecting to Scanner...", "success");
+                
+                setTimeout(() => {
+                    window.location.href = '/upload';
+                }, 1500);
+            }
+        }
+
+        document.getElementById('patientName').addEventListener('input', function() {
+            this.classList.remove('input-error');
+            document.getElementById('nameError').style.display = 'none';
+        });
+
+        document.getElementById('patientAge').addEventListener('input', function() {
+            this.classList.remove('input-error');
+            document.getElementById('ageError').style.display = 'none';
+        });
+
+        function toggleChat() {
+            const win = document.getElementById('retibot-window');
+            win.style.display = (win.style.display === 'none' || win.style.display === '') ? 'flex' : 'none';
+        }
+        
+        function handleEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+        function appendMessage(sender, text) {
+            const history = document.getElementById('retibot-chat-history');
+            const row = document.createElement('div');
+            row.className = 'msg-row ' + (sender === 'user' ? 'msg-user' : 'msg-bot');
+            row.innerHTML = `<div class="msg-bubble">${text}</div>`;
+            history.appendChild(row);
+            history.scrollTop = history.scrollHeight; 
+        }
+
+        async function sendMessage() {
+            const inputField = document.getElementById('retibot-input');
+            const msg = inputField.value.trim();
+            if (!msg) return;
+            
+            appendMessage('user', msg);
+            inputField.value = '';
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await response.json();
+                setTimeout(() => appendMessage('bot', data.reply), 500); 
+            } catch (err) {
+                setTimeout(() => appendMessage('bot', "⚠️ Connection Error. Ensure AI Server (app.py) is running."), 500);
+            }
+        }
+    </script>
+</body>
+</html>

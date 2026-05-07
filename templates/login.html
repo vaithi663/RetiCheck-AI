@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetiCheck AI | Secure Portal Login</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: url("{{ url_for('static', filename='eye-bg.jpg') }}") center/cover fixed no-repeat; 
+            background-color: #0b1820; 
+            color: white; 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+            position: relative;
+        }
+
+        .bg-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(8, 20, 25, 0.9) 0%, rgba(15, 35, 45, 0.75) 100%);
+            z-index: -1;
+        }
+        
+        .navbar { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(15px); 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 50px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 26px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px; letter-spacing: 1px; }
+        .logo span { color: #00f2fe; font-size: 30px; } 
+        .nav-links { display: flex; gap: 40px; list-style: none; }
+        .nav-links li a { text-decoration: none; color: #d1d5db; font-weight: 500; font-size: 15px; transition: 0.3s; }
+        .nav-links li a:hover, .nav-links li a.active { color: #00f2fe; }
+        
+        .btn-nav { 
+            background: transparent; 
+            color: #00f2fe; 
+            padding: 10px 25px; 
+            border: 1px solid #00f2fe; 
+            font-weight: 600; 
+            font-size: 14px; 
+            cursor: pointer; 
+            transition: 0.4s; 
+            border-radius: 8px; 
+        }
+        .btn-nav:hover { 
+            background: rgba(0, 242, 254, 0.1); 
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3); 
+        }
+        
+        .login-container { display: flex; justify-content: center; align-items: center; padding: 50px 20px; min-height: calc(100vh - 80px); }
+        .login-card { 
+            display: flex; 
+            width: 100%; 
+            max-width: 1000px; 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(20px);
+            border-radius: 20px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+            overflow: hidden; 
+            min-height: 500px; 
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        
+        .card-left { 
+            flex: 1; 
+            background: url("https://images.unsplash.com/photo-1582719471384-894fbb16e074?q=80&w=2070&auto=format&fit=crop") center/cover no-repeat; 
+            position: relative; 
+            padding: 40px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; 
+        }
+        .card-left::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to top, rgba(11, 24, 32, 0.95), rgba(11, 24, 32, 0.3));
+        }
+        .card-left-content { position: relative; z-index: 1; }
+        .card-left h2 { font-size: 20px; font-weight: 500; line-height: 1.3; color: #00f2fe; }
+        .card-left h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; color: white; }
+        .card-left p { font-size: 14px; color: #d1d5db; }
+
+        .card-right { flex: 1; padding: 50px 60px; display: flex; flex-direction: column; justify-content: center; position: relative; }
+        .card-right h2 { text-align: center; font-size: 26px; font-weight: 700; color: #ffffff; margin-bottom: 30px; }
+        
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; color: #9ca3af; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;}
+        .input-group input { width: 100%; padding: 15px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; font-size: 14px; color: #ffffff; outline: none; transition: 0.3s; background: rgba(0,0,0,0.2); }
+        .input-group input:focus { border-color: #00f2fe; box-shadow: 0 0 10px rgba(0, 242, 254, 0.2); background: rgba(0,0,0,0.4); }
+        
+        .remember-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; font-size: 13px; color: #9ca3af; }
+        .remember-row div { display: flex; align-items: center; gap: 8px; }
+        .forgot-link { color: #00f2fe; cursor: pointer; transition: 0.3s; text-decoration: none; }
+        .forgot-link:hover { text-decoration: underline; }
+        
+        .btn-login { width: 100%; padding: 15px; background: linear-gradient(135deg, #00f2fe, #4facfe); color: #0b1820; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;}
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 242, 254, 0.4); }
+        
+        .register-link { text-align: center; font-size: 14px; color: #9ca3af; }
+        .register-link span { color: #00f2fe; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .register-link span:hover { text-decoration: underline; }
+        
+        #step2, #stepRegister { display: none; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .custom-toast {
+            background: rgba(11, 24, 32, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            padding: 16px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: slideInRight 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+            min-width: 280px;
+        }
+
+        .toast-success { border-left: 4px solid #10b981; }
+        .toast-error { border-left: 4px solid #ef4444; }
+
+        @keyframes slideInRight {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOutUp {
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+        #retibot-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; font-family: 'Poppins', sans-serif; display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
+        #retibot-toggle { width: 60px; height: 60px; background: rgba(15, 30, 40, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50%; box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 15px rgba(0, 242, 254, 0.1); cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; display: flex; justify-content: center; align-items: center; }
+        #retibot-toggle:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(0, 242, 254, 0.3); }
+        #retibot-window { width: 380px; max-height: calc(100vh - 120px); height: 600px; background: rgba(11, 24, 32, 0.25); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); border-radius: 20px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.15); display: none; flex-direction: column; border: 1px solid rgba(0, 242, 254, 0.2); }
+        .retibot-header { background: rgba(0,0,0,0.1); color: white; padding: 25px 20px; flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .retibot-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .retibot-badge { background: rgba(0, 242, 254, 0.1); color: #00f2fe; padding: 8px 15px; border-radius: 8px; font-size: 13px; font-weight: 700; border: 1px solid rgba(0, 242, 254, 0.2); display: flex; align-items: center; gap: 8px; box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+        .action-btn { background: transparent; border: none; color: #9ca3af; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; padding: 5px; border-radius: 5px; }
+        .action-btn:hover { color: #00f2fe; background: rgba(255,255,255,0.05); }
+        .retibot-header p { font-size: 13px; color: #9ca3af; line-height: 1.5; margin-top: 5px; }
+        .retibot-body { flex: 1; padding: 25px 20px; overflow-y: auto; background: transparent; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .retibot-input-area { padding: 15px; background: rgba(0,0,0,0.1); border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .retibot-input-area input { flex: 1; padding: 12px 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 25px; font-size: 13px; outline: none; transition: 0.3s; font-family: 'Poppins', sans-serif;}
+        .retibot-input-area input::placeholder { color: #9ca3af; }
+        .retibot-input-area input:focus { border-color: #00f2fe; background: rgba(255,255,255,0.1); box-shadow: 0 0 10px rgba(0,242,254,0.1); }
+        .retibot-send { background: #00f2fe; color: #0b1820; border: none; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; flex-shrink: 0; }
+        .retibot-send:hover { background: #00c6d1; transform: scale(1.05); box-shadow: 0 0 15px rgba(0, 242, 254, 0.4); }
+        .msg-row { display: flex; width: 100%; }
+        .msg-user { justify-content: flex-end; }
+        .msg-bot { justify-content: flex-start; }
+        .msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 15px; font-size: 13px; line-height: 1.5; }
+        .msg-user .msg-bubble { background: linear-gradient(135deg, #00f2fe, #4facfe); color: #0b1820; font-weight: 500; border-bottom-right-radius: 3px; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2); }
+        .msg-bot .msg-bubble { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #ffffff; border-bottom-left-radius: 3px; backdrop-filter: blur(2px); }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div class="bg-overlay"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 12px;">
+                <path d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12" stroke="#00f2fe" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.3"/>
+                <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22M12 2C12 2 8 6 8 12C8 18 12 22 12 22M2 12H22" stroke="#00f2fe" stroke-width="1" stroke-opacity="0.15"/>
+                <path d="M8 12.5L11 15.5L18.5 8.5" stroke="#00f2fe" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            RetiCheck AI
+        </div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/about">How it Works</a></li>
+            <li><a href="/services">Features</a></li>
+            <li><a href="/contact">Contact</a></li>
+        </ul>
+        <button class="btn-nav" onclick="window.location.href='/login'">Login</button>
+    </nav>
+
+    <div class="login-container">
+        <div class="login-card">
+            
+            <div class="card-left">
+                <div class="card-left-content">
+                    <h2>Secure Medical Portal</h2>
+                    <h1>Portal Login</h1>
+                    <p>Access the RetiCheck AI System. Designed for hospitals, clinics, and rural healthcare centers.</p>
+                </div>
+            </div>
+
+            <div class="card-right">
+                
+                <div id="step1">
+                    <h2>Welcome to RetiCheck</h2>
+                    <div class="input-group">
+                        <label>Login ID / Email</label>
+                        <input type="email" id="userEmail" placeholder="user@domain.com">
+                    </div>
+                    
+                    <div class="remember-row">
+                        <div>
+                            <input type="checkbox" id="remember">
+                            <label for="remember" style="margin-bottom: 0; text-transform: none; font-weight: 500;">Remember me</label>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-login" onclick="goToPasswordStep()">Continue</button>
+                    <div class="register-link">New User? <span onclick="showRegisterStep()">Create Account</span></div>
+                </div>
+
+                <div id="step2">
+                    <h2>Enter Password</h2>
+                    <p id="displayEmail" style="text-align: center; color: #00f2fe; font-weight: 600; font-size: 14px; margin-bottom: 25px; background: rgba(0, 242, 254, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(0, 242, 254, 0.2);"></p>
+                    
+                    <div class="input-group">
+                        <label>Security Password</label>
+                        <input type="password" id="userPassword" placeholder="••••••••••••">
+                    </div>
+                    
+                    <div class="remember-row">
+                        <div class="register-link"><span onclick="showLoginStep()">← Change ID</span></div>
+                        <a href="#" class="forgot-link">Forgot Password?</a>
+                    </div>
+                    
+                    <button class="btn-login" onclick="finalLogin()">Secure Login</button>
+                </div>
+
+                <div id="stepRegister">
+                    <h2>Create Account</h2>
+                    <p style="font-size: 13px; color: #9ca3af; margin-bottom: 20px; text-align: center;">Register your email to access the RetiCheck AI diagnostic platform.</p>
+                    
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="regEmail" placeholder="user@domain.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Create Password</label>
+                        <input type="password" id="regPassword" placeholder="Minimum 6 characters">
+                    </div>
+                    <div class="input-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="regConfirm" placeholder="Re-enter password">
+                    </div>
+                    
+                    <button class="btn-login" onclick="handleRegistration()">Register</button>
+                    <div class="register-link">Already have an account? <span onclick="showLoginStep()">Login Here</span></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="retibot-container">
+        <div id="retibot-window">
+            <div class="retibot-header">
+                <div class="retibot-top-bar">
+                    <span class="retibot-badge">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        &nbsp;RetiBot Support
+                    </span>
+                    <div class="header-actions">
+                        <button class="action-btn" onclick="toggleChat()" title="Close">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <p>Typically replies instantly. Feel free to ask any diagnostic-related queries.</p>
+            </div>
+
+            <div class="retibot-body" id="retibot-chat-history">
+                <div class="msg-row msg-bot">
+                    <div class="msg-bubble">Hello there! 👋 I am RetiBot, your AI Assistant. How can I help you today?</div>
+                </div>
+            </div>
+
+            <div class="retibot-input-area">
+                <input type="text" id="retibot-input" placeholder="Type your message here..." onkeypress="handleEnter(event)">
+                <button class="retibot-send" onclick="sendMessage()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <button id="retibot-toggle" onclick="toggleChat()">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3.5" stroke="#00f2fe" stroke-width="2.5" fill="none"/>
+            </svg>
+        </button>
+    </div>
+
+    <script>
+       
+        function showToast(message, type = 'error') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `custom-toast toast-${type}`;
+            
+            let icon = '';
+            if(type === 'success') {
+                icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+            } else {
+                icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+            }
+
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            container.appendChild(toast);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'fadeOutUp 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        function showRegisterStep() {
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('stepRegister').style.display = 'block';
+        }
+
+        function showLoginStep() {
+            document.getElementById('stepRegister').style.display = 'none';
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('step1').style.display = 'block';
+        }
+
+        function handleRegistration() {
+            const email = document.getElementById('regEmail').value.trim();
+            const pass = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
+
+            if(!emailPattern.test(email)) {
+                showToast("Please enter a valid email address.", "error"); return;
+            }
+            if(pass.length < 6) {
+                showToast("Password must be at least 6 characters long.", "error"); return;
+            }
+            if(pass !== confirm) {
+                showToast("Passwords do not match! Please try again.", "error"); return;
+            }
+
+            if(localStorage.getItem('reticheck_user_' + email)) {
+                showToast("Account already exists. Please login.", "error"); return;
+            }
+
+            localStorage.setItem('reticheck_user_' + email, pass);
+            showToast("Account created successfully! You can now log in.", "success");
+            
+            document.getElementById('regEmail').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regConfirm').value = '';
+            
+            document.getElementById('userEmail').value = email;
+            showLoginStep();
+        }
+
+        function goToPasswordStep() {
+            const email = document.getElementById('userEmail').value.trim();
+            
+            if(emailPattern.test(email)) {
+                const userExists = localStorage.getItem('reticheck_user_' + email);
+                const isAdmin = (email === "admin@hospital.com");
+
+                if(userExists || isAdmin) {
+                    document.getElementById('displayEmail').innerText = email;
+                    document.getElementById('step1').style.display = 'none';
+                    document.getElementById('step2').style.display = 'block';
+                } else {
+                    showToast("Account not found. Please create an account.", "error");
+                }
+            } else {
+                showToast("Please enter a valid Email ID.", "error");
+            }
+        }
+
+        function finalLogin() {
+            const email = document.getElementById('userEmail').value.trim();
+            const pass = document.getElementById('userPassword').value;
+            
+            const storedPass = localStorage.getItem('reticheck_user_' + email);
+            const isAdminMatch = (email === "admin@hospital.com" && pass === "admin123");
+
+            if(pass.trim() === "") {
+                showToast("Please enter your password.", "error"); return;
+            }
+
+            if(isAdminMatch || (storedPass && pass === storedPass)) {
+                window.location.href = '/patient_form';
+            } else {
+                showToast("Incorrect password. Please try again.", "error");
+            }
+        }
+
+        function toggleChat() {
+            const win = document.getElementById('retibot-window');
+            win.style.display = (win.style.display === 'none' || win.style.display === '') ? 'flex' : 'none';
+        }
+        
+        function handleEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+        function appendMessage(sender, text) {
+            const history = document.getElementById('retibot-chat-history');
+            const row = document.createElement('div');
+            row.className = 'msg-row ' + (sender === 'user' ? 'msg-user' : 'msg-bot');
+            row.innerHTML = `<div class="msg-bubble">${text}</div>`;
+            history.appendChild(row);
+            history.scrollTop = history.scrollHeight; 
+        }
+
+        async function sendMessage() {
+            const inputField = document.getElementById('retibot-input');
+            const msg = inputField.value.trim();
+            if (!msg) return;
+            
+            appendMessage('user', msg);
+            inputField.value = '';
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await response.json();
+                setTimeout(() => appendMessage('bot', data.reply), 500); 
+            } catch (err) {
+                setTimeout(() => appendMessage('bot', "⚠️ Connection Error. Ensure AI Server is running."), 500);
+            }
+        }
+    </script>
+</body>
+</html>

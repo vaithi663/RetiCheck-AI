@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetiCheck AI | Patient Database</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: url("{{ url_for('static', filename='eye-bg.jpg') }}") center/cover fixed no-repeat; 
+            background-color: #0b1820; color: white; min-height: 100vh; overflow-x: hidden; position: relative;
+        }
+
+        .bg-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(8, 20, 25, 0.95) 0%, rgba(15, 35, 45, 0.85) 100%); z-index: -1;
+        }
+        
+        .navbar { 
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 50px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+        }
+        .logo { font-size: 26px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px; letter-spacing: 1px; }
+        .logo span { color: #00f2fe; font-size: 30px; } 
+        .nav-links { display: flex; gap: 40px; list-style: none; }
+        .nav-links li a { text-decoration: none; color: #d1d5db; font-weight: 500; font-size: 15px; transition: 0.3s; cursor: pointer; }
+        .nav-links li a:hover, .nav-links li a.active { color: #00f2fe; border-bottom: 2px solid #00f2fe; padding-bottom: 5px; }
+        .btn-nav { background: transparent; color: #ef4444; padding: 10px 25px; border: 1px solid #ef4444; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.4s; border-radius: 8px; }
+        .btn-nav:hover { background: rgba(239, 68, 68, 0.1); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+
+        #pin-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(8, 20, 25, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 9999; display: flex; justify-content: center; align-items: center;
+        }
+        .pin-modal-box {
+            background: #111e26; 
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            border-radius: 12px; 
+            padding: 35px 40px; 
+            width: 90%; max-width: 420px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn { 
+            0% { opacity: 0; transform: translateY(10px); } 
+            100% { opacity: 1; transform: translateY(0); } 
+        }
+        .modal-icon {
+            width: 60px; height: 60px;
+            background: rgba(0, 242, 254, 0.05);
+            border-radius: 12px;
+            display: flex; justify-content: center; align-items: center;
+            margin: 0 auto 20px auto;
+            border: 1px solid rgba(0, 242, 254, 0.1);
+        }
+        .pin-modal-box h3 { color: #ffffff; font-size: 22px; font-weight: 600; margin-bottom: 8px;}
+        .pin-modal-box p { color: #9ca3af; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
+        
+        .pin-input-group { margin-bottom: 25px; position: relative;}
+        .pin-input-group input { 
+            width: 100%; padding: 16px; 
+            background: rgba(0, 0, 0, 0.3); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 8px; color: #00f2fe; 
+            outline: none; font-size: 26px; font-weight: 600; 
+            letter-spacing: 12px; text-align: center;
+            transition: 0.3s; text-indent: 12px;
+        }
+        .pin-input-group input:focus { 
+            border-color: #00f2fe; 
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.1);
+        }
+        .pin-input-group input::placeholder { color: #475569; letter-spacing: 6px; font-size: 18px; text-indent: 6px; font-weight: 400;}
+        
+        .pin-modal-btns { display: flex; gap: 15px; }
+        .pin-btn-cancel { 
+            flex: 1; background: transparent; border: 1px solid rgba(255,255,255,0.2); 
+            color: #d1d5db; padding: 14px; border-radius: 8px; 
+            cursor: pointer; transition: 0.3s; font-weight: 500; font-size: 15px;
+        }
+        .pin-btn-cancel:hover { background: rgba(255, 255, 255, 0.05); color: #ffffff;}
+        .pin-btn-submit { 
+            flex: 1; background: #00f2fe; border: none; 
+            color: #0b1820; padding: 14px; border-radius: 8px; 
+            cursor: pointer; transition: 0.3s; font-weight: 600; font-size: 15px;
+        }
+        .pin-btn-submit:hover { background: #00c6d1; }
+
+        .db-container { padding: 30px 20px; display: flex; justify-content: center; }
+        .db-card { 
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(25px); border-radius: 20px; 
+            padding: 35px; width: 100%; max-width: 1200px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+            border: 1px solid rgba(0, 242, 254, 0.2);
+        }
+
+        .db-header { text-align: left; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .db-header h1 { font-size: 26px; font-weight: 800; color: #00f2fe; margin-bottom: 5px; letter-spacing: 1px; display: flex; align-items: center; gap: 12px; }
+        .db-header p { font-size: 13px; color: #9ca3af; margin-top: 5px; }
+        .total-scans { background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); padding: 8px 15px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #00f2fe; }
+
+        .dashboard-layout { display: flex; gap: 30px; align-items: flex-start; }
+
+        .chart-container { 
+            flex: 0.35; 
+            background: rgba(0,0,0,0.3); padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .chart-container h3 { font-size: 14px; color: #ffffff; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; text-align: center;}
+        .chart-wrapper { position: relative; width: 100%; max-width: 220px; margin: 0 auto; }
+
+        .table-wrapper { flex: 0.65; overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: rgba(0, 242, 254, 0.05); color: #00f2fe; padding: 16px 20px; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; border-bottom: 1px solid rgba(0, 242, 254, 0.2); }
+        td { padding: 16px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #d1d5db; font-size: 13px; font-weight: 500; }
+        tr:hover { background: rgba(255, 255, 255, 0.03); }
+        
+        .status-acute { background: rgba(239, 68, 68, 0.1); color: #ef4444; font-weight: 700; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 11px; white-space: nowrap; display: inline-block; text-align: center; letter-spacing: 0.5px;}
+        .status-observation { background: rgba(245, 158, 11, 0.1); color: #f59e0b; font-weight: 700; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 11px; white-space: nowrap; display: inline-block; text-align: center; letter-spacing: 0.5px;}
+        .status-nonpath { background: rgba(16, 185, 129, 0.1); color: #10b981; font-weight: 700; padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 11px; white-space: nowrap; display: inline-block; text-align: center; letter-spacing: 0.5px;}
+
+        @media (max-width: 900px) {
+            .dashboard-layout { flex-direction: column; }
+            .chart-container, .table-wrapper { flex: 1; width: 100%; }
+        }
+
+        #retibot-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; font-family: 'Poppins', sans-serif; display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
+        #retibot-toggle { width: 60px; height: 60px; background: rgba(15, 30, 40, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50%; box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 15px rgba(0, 242, 254, 0.1); cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; display: flex; justify-content: center; align-items: center; }
+        #retibot-toggle:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(0, 242, 254, 0.3); }
+        #retibot-window { width: 380px; max-height: calc(100vh - 120px); height: 600px; background: rgba(11, 24, 32, 0.25); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); border-radius: 20px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.15); display: none; flex-direction: column; border: 1px solid rgba(0, 242, 254, 0.2); }
+        .retibot-header { background: rgba(0,0,0,0.1); color: white; padding: 25px 20px; flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .retibot-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .retibot-badge { background: rgba(0, 242, 254, 0.1); color: #00f2fe; padding: 8px 15px; border-radius: 8px; font-size: 13px; font-weight: 700; border: 1px solid rgba(0, 242, 254, 0.2); display: flex; align-items: center; gap: 8px; box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+        .action-btn { background: transparent; border: none; color: #9ca3af; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; padding: 5px; border-radius: 5px; }
+        .action-btn:hover { color: #00f2fe; background: rgba(255,255,255,0.05); }
+        .retibot-header p { font-size: 13px; color: #9ca3af; line-height: 1.5; margin-top: 5px; }
+        .retibot-body { flex: 1; padding: 25px 20px; overflow-y: auto; background: transparent; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .retibot-input-area { padding: 15px; background: rgba(0,0,0,0.1); border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .retibot-input-area input { flex: 1; padding: 12px 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 25px; font-size: 13px; outline: none; transition: 0.3s; font-family: 'Poppins', sans-serif;}
+        .retibot-input-area input::placeholder { color: #9ca3af; }
+        .retibot-input-area input:focus { border-color: #00f2fe; background: rgba(255,255,255,0.1); box-shadow: 0 0 10px rgba(0,242,254,0.1); }
+        .retibot-send { background: #00f2fe; color: #0b1820; border: none; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; flex-shrink: 0; }
+        .retibot-send:hover { background: #00c6d1; transform: scale(1.05); box-shadow: 0 0 15px rgba(0, 242, 254, 0.4); }
+        .retibot-send svg { margin-left: -2px; }
+        .msg-row { display: flex; width: 100%; }
+        .msg-user { justify-content: flex-end; }
+        .msg-bot { justify-content: flex-start; }
+        .msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 15px; font-size: 13px; line-height: 1.5; }
+        .msg-user .msg-bubble { background: linear-gradient(135deg, #00f2fe, #4facfe); color: #0b1820; font-weight: 500; border-bottom-right-radius: 3px; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2); }
+        .msg-bot .msg-bubble { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #ffffff; border-bottom-left-radius: 3px; backdrop-filter: blur(2px); }
+    </style>
+</head>
+<body>
+
+    <div id="pin-modal-overlay">
+        <div class="pin-modal-box">
+            <div class="modal-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+            </div>
+            <h3>Authentication Required</h3>
+            <p>Please enter the administrative PIN to access encrypted patient records.</p>
+            <div class="pin-input-group">
+                <input type="password" id="adminPinInput" placeholder="••••" maxlength="4" onkeypress="if(event.key === 'Enter') verifyPin()">
+            </div>
+            <div class="pin-modal-btns">
+                <button class="pin-btn-cancel" onclick="window.history.back()">Cancel</button>
+                <button class="pin-btn-submit" onclick="verifyPin()">Authorize</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-overlay"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 12px;">
+                <path d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12" stroke="#00f2fe" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.3"/>
+                <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22M12 2C12 2 8 6 8 12C8 18 12 22 12 22M2 12H22" stroke="#00f2fe" stroke-width="1" stroke-opacity="0.15"/>
+                <path d="M8 12.5L11 15.5L18.5 8.5" stroke="#00f2fe" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            RetiCheck AI
+        </div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/patient_form">New Patient</a></li>
+            <li><a href="/upload">New Scan</a></li>
+            <li>
+                <a href="/database" class="active" style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 9V7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7V9H6C4.89543 9 4 9.89543 4 11V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V11C20 9.89543 19.1046 9 18 9H17ZM9 7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7V9H9V7ZM18 20H6V11H18V20ZM12 13C11.1716 13 10.5 13.6716 10.5 14.5C10.5 15.3284 11.1716 16 12 16C12.8284 16 13.5 15.3284 13.5 14.5C13.5 13.6716 12.8284 13 12 13Z" fill="currentColor"/>
+                    </svg>
+                    Patient Database
+                </a>
+            </li>
+        </ul>
+        <button class="btn-nav" onclick="window.location.href='/'">Logout</button>
+    </nav>
+        
+    <div class="db-container" id="secureData" style="display: none;">
+        <div class="db-card">
+            <div class="db-header">
+                <div>
+                    <h1>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                        </svg>
+                        Patient Prediction Database
+                    </h1>
+                    <p style="margin-top: 5px;">Real-time history of all retinal scans analyzed securely by RetiCheck AI.</p>
+                </div>
+                <div class="total-scans">Total Scans: <span id="scanCount">0</span></div>
+            </div>
+
+            <div class="dashboard-layout">
+                <div class="chart-container">
+                    <h3>Overall Analytics</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="triageChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Patient ID</th>
+                                <th>Predicted Disease</th>
+                                <th>AI Confidence</th>
+                                <th>Triage Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if records %}
+                                {% for r in records %}
+                                <tr>
+                                    <td>{{ r[1] }}</td> 
+                                    <td>RC-2026-{{ r[0] }}</td> 
+                                    <td>{{ r[2] }}</td> 
+                                    <td>{{ r[3] }}</td> 
+                                    <td>
+                                        {% if 'ACUTE' in r[4] or 'URGENT' in r[4] %}
+                                            <span class="status-acute">ACUTE PATHOLOGY</span>
+                                        {% elif 'OBSERVATION' in r[4] or 'REFERRAL' in r[4] %}
+                                            <span class="status-observation">CLINICAL OBSERVATION</span>
+                                        {% else %}
+                                            <span class="status-nonpath">NON PATHOLOGICAL</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: #9ca3af; padding: 30px;">
+                                        No patient scans recorded yet. Perform a New Scan to populate the database.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="retibot-container">
+        <div id="retibot-window">
+            <div class="retibot-header">
+                <div class="retibot-top-bar">
+                    <span class="retibot-badge">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        &nbsp;RetiBot Support
+                    </span>
+                    <div class="header-actions">
+                        <button class="action-btn" onclick="toggleChat()" title="Close">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <p>Typically replies instantly. Feel free to ask any diagnostic-related queries.</p>
+            </div>
+
+            <div class="retibot-body" id="retibot-chat-history">
+                <div class="msg-row msg-bot">
+                    <div class="msg-bubble">Hello there! 👋 I am RetiBot, your AI Assistant. How can I help you today?</div>
+                </div>
+            </div>
+
+            <div class="retibot-input-area">
+                <input type="text" id="retibot-input" placeholder="Type your message here..." onkeypress="handleEnter(event)">
+                <button class="retibot-send" onclick="sendMessage()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <button id="retibot-toggle" onclick="toggleChat()">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3.5" stroke="#00f2fe" stroke-width="2.5" fill="none"/>
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        // Added DOMContentLoaded to ensure elements are ready
+        document.addEventListener("DOMContentLoaded", function() {
+            const pinInput = document.getElementById('adminPinInput');
+            if(pinInput) { pinInput.focus(); }
+        });
+
+        function verifyPin() {
+            const pin = document.getElementById('adminPinInput').value;
+            
+            if (pin === "1234") {
+                document.getElementById('pin-modal-overlay').style.display = 'none';
+                document.getElementById('secureData').style.display = 'flex';
+                
+                const tableRows = document.querySelectorAll('tbody tr').length;
+                const emptyMessage = document.querySelector('td[colspan="5"]');
+                document.getElementById('scanCount').innerText = emptyMessage ? "0" : tableRows;
+
+                const ctx = document.getElementById('triageChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Normal', 'Diabetic', 'Glaucoma'],
+                        datasets: [{
+                            data: [45, 25, 30], 
+                            backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+                            borderWidth: 0,
+                            hoverOffset: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#d1d5db', font: { family: 'Poppins', size: 11 }, padding: 15 } }
+                        },
+                        cutout: '75%'
+                    }
+                });
+            } else {
+                const input = document.getElementById('adminPinInput');
+                input.style.borderColor = '#ef4444';
+                input.value = '';
+                input.placeholder = 'Invalid PIN';
+                setTimeout(() => { 
+                    input.style.borderColor = 'rgba(255,255,255,0.1)';
+                    input.placeholder = '••••';
+                }, 1000);
+            }
+        }
+
+        // --- CHATBOT LOGIC ---
+        function toggleChat() {
+            const win = document.getElementById('retibot-window');
+            win.style.display = (win.style.display === 'none' || win.style.display === '') ? 'flex' : 'none';
+        }
+        
+        function handleEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+        function appendMessage(sender, text) {
+            const history = document.getElementById('retibot-chat-history');
+            const row = document.createElement('div');
+            row.className = 'msg-row ' + (sender === 'user' ? 'msg-user' : 'msg-bot');
+            row.innerHTML = `<div class="msg-bubble">${text}</div>`;
+            history.appendChild(row);
+            history.scrollTop = history.scrollHeight; 
+        }
+
+        async function sendMessage() {
+            const inputField = document.getElementById('retibot-input');
+            const msg = inputField.value.trim();
+            if (!msg) return;
+            
+            appendMessage('user', msg);
+            inputField.value = '';
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await response.json();
+                setTimeout(() => appendMessage('bot', data.reply), 500); 
+            } catch (err) {
+                setTimeout(() => appendMessage('bot', "⚠️ Connection Error. Ensure AI Server (app.py) is running."), 500);
+            }
+        }
+    </script>
+</body>
+</html>

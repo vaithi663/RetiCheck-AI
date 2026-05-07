@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetiCheck AI | Automated Scan</title>
+    <style>
+        /* 🔥 Added Space Mono font for the Patient Details */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: url("{{ url_for('static', filename='eye-bg.jpg') }}") center/cover fixed no-repeat; 
+            background-color: #0b1820; 
+            color: white; 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        .bg-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(8, 20, 25, 0.95) 0%, rgba(15, 35, 45, 0.85) 100%);
+            z-index: -1;
+        }
+        
+        /* 🔥 UNIFIED NAVBAR */
+        .navbar { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(15px); 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 50px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 26px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px; letter-spacing: 1px; }
+        .logo span { color: #00f2fe; font-size: 30px; } 
+        .nav-links { display: flex; gap: 40px; list-style: none; }
+        .nav-links li a { text-decoration: none; color: #d1d5db; font-weight: 500; font-size: 15px; transition: 0.3s; }
+        .nav-links li a:hover, .nav-links li a.active { color: #00f2fe; border-bottom: 2px solid #00f2fe; padding-bottom: 5px; }
+        
+        .btn-nav { 
+            background: transparent; color: #ef4444; padding: 10px 25px; border: 1px solid #ef4444; 
+            font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.4s; border-radius: 8px; 
+        }
+        .btn-nav:hover { background: rgba(239, 68, 68, 0.1); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+
+        /* 🔥 MAIN SCAN CONTAINER */
+        .scan-container {
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            padding: 50px 20px; min-height: calc(100vh - 90px);
+        }
+
+        .scan-panel {
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 20px;
+            padding: 40px; width: 100%; max-width: 950px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); position: relative;
+            display: flex; flex-direction: column; gap: 30px;
+        }
+
+        /* 🔥 NEW MNC LEVEL: PATIENT INFO BAR 🔥 */
+        .patient-info-bar {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
+            background: linear-gradient(90deg, rgba(0, 242, 254, 0.05) 0%, rgba(0, 0, 0, 0.2) 100%);
+            border-left: 4px solid #00f2fe; border-radius: 8px; padding: 15px 30px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+        }
+        .p-group { display: flex; align-items: center; gap: 50px; flex-wrap: wrap; }
+        .p-item { display: flex; flex-direction: column; position: relative; }
+        .p-item:not(:last-child)::after {
+            content: ''; position: absolute; right: -25px; top: 15%; height: 70%; width: 1px; background: rgba(255,255,255,0.1);
+        }
+        .p-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; display:flex; align-items:center; gap:6px; font-weight:600;}
+        .p-label svg { stroke: #00f2fe; width: 14px; height: 14px; opacity: 0.8;}
+        .p-val { font-size: 16px; font-weight: 600; color: #f8fafc; font-family: 'Space Mono', monospace; text-transform: capitalize; }
+        .p-val.highlight { color: #00f2fe; text-shadow: 0 0 10px rgba(0,242,254,0.3); font-weight: 700; letter-spacing: 1px;}
+        
+        .p-status {
+            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981; padding: 6px 15px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+            display:flex; align-items:center; gap:8px;
+        }
+        .pulse-dot { width:8px; height:8px; background:#10b981; border-radius:50%; box-shadow: 0 0 8px #10b981; animation: pulse 1.5s infinite;}
+        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+
+
+        /* 🔥 SCANNER LAYOUT (Old Design) */
+        .scanner-body { display: flex; gap: 50px; }
+
+        .scanner-left { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+        
+        .bracket { position: absolute; width: 40px; height: 40px; border: 3px solid #00f2fe; border-radius: 5px; transition: 0.3s; }
+        .tl { top: 0; left: 0; border-bottom: none; border-right: none; }
+        .tr { top: 0; right: 0; border-bottom: none; border-left: none; }
+        .bl { bottom: 0; left: 0; border-top: none; border-right: none; }
+        .br { bottom: 0; right: 0; border-top: none; border-left: none; }
+
+        .system-text { position: absolute; top: -15px; left: 15px; font-size: 11px; color: #9ca3af; letter-spacing: 1px; text-transform: uppercase; }
+        .system-text span { color: #00f2fe; font-weight: bold; }
+
+        .scan-circle {
+            width: 320px; height: 320px; border-radius: 50%; border: 2px dashed rgba(0, 242, 254, 0.4);
+            position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(0, 242, 254, 0.1);
+            cursor: pointer; transition: 0.4s; background: rgba(0,0,0,0.3);
+        }
+        .scan-circle:hover { border: 2px solid #00f2fe; box-shadow: 0 0 40px rgba(0, 242, 254, 0.3); transform: scale(1.02); }
+        
+        .scan-circle img { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; transition: 0.5s; }
+        
+        .scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: #ffffff;
+            box-shadow: 0 0 20px 8px rgba(0, 242, 254, 0.8); display: none; 
+        }
+        @keyframes scanMove { 0% { top: -10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 110%; opacity: 0; } }
+
+        .upload-instruction {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; font-size: 14px; font-weight: 600; color: #ffffff;
+            pointer-events: none; text-shadow: 0 2px 10px rgba(0,0,0,0.8); letter-spacing: 1px;
+        }
+
+        .scanner-right { flex: 1; display: flex; flex-direction: column; }
+
+        .instruction-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; color: #ffffff; margin-bottom: 25px; }
+        .instruction-box h2 { font-size: 22px; font-weight: 700; color: #00f2fe; line-height: 1.3; margin-bottom: 15px; letter-spacing: 1px; }
+        .steps { list-style: none; font-size: 13px; color: #9ca3af; line-height: 1.8; }
+        .steps li { margin-bottom: 10px; transition: 0.3s; }
+        .steps li.active { color: #ffffff; font-weight: 600; }
+
+        .status-row { display: flex; gap: 15px; font-size: 11px; font-weight: 600; color: #9ca3af; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .status-row div { display: flex; align-items: center; gap: 6px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #4b5563; }
+        .dot.active-dot { background: #00f2fe; box-shadow: 0 0 10px #00f2fe; }
+
+        .progress-area { margin-top: auto; }
+        .percentage { font-size: 80px; font-weight: 800; color: #00f2fe; line-height: 1; text-shadow: 0 0 25px rgba(0, 242, 254, 0.4); margin-bottom: 5px; }
+        .progress-title { font-size: 14px; font-weight: 700; letter-spacing: 2px; color: #ffffff; text-transform: uppercase; }
+        .progress-sub { font-size: 12px; color: #9ca3af; margin-bottom: 20px; }
+
+        .btn-result {
+            background: linear-gradient(135deg, #00f2fe, #4facfe); color: #0b1820; border: none; 
+            padding: 15px 25px; font-weight: 800; border-radius: 8px; cursor: pointer; display: none;
+            transition: 0.4s; width: 100%; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(0, 242, 254, 0.3);
+        }
+        .btn-result:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5); }
+
+        #fileInput { display: none; }
+
+        /* 🔥 NEW 4 SECTIONS BELOW SCANNER 🔥 */
+        .info-sections-wrapper {
+            width: 100%; max-width: 1200px; margin: 20px auto 100px auto; padding: 0 20px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+        }
+
+        .info-card {
+            background: rgba(11, 24, 32, 0.6); border: 1px solid rgba(255,255,255,0.05);
+            padding: 30px; border-radius: 16px; backdrop-filter: blur(10px);
+            transition: 0.3s;
+        }
+        .info-card:hover { border-color: rgba(0, 242, 254, 0.3); transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.5);}
+        
+        .info-icon { width: 50px; height: 50px; background: rgba(0, 242, 254, 0.1); border-radius: 10px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; border: 1px solid rgba(0, 242, 254, 0.2);}
+        .info-icon svg { stroke: #00f2fe; width: 24px; height: 24px;}
+        .info-card h3 { font-size: 18px; color: #ffffff; margin-bottom: 15px; font-weight: 700; letter-spacing: 0.5px;}
+        .info-card p { font-size: 13px; color: #9ca3af; line-height: 1.7; margin-bottom: 10px;}
+        .info-card ul { list-style: none; font-size: 13px; color: #cbd5e1; }
+        .info-card ul li { margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .info-card ul li::before { content: "•"; color: #00f2fe; font-weight: bold; font-size: 18px;}
+
+        /* 🔥 CHATBOT CSS */
+        #retibot-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; font-family: 'Poppins', sans-serif; display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
+        #retibot-toggle { width: 60px; height: 60px; background: rgba(15, 30, 40, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50%; box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 15px rgba(0, 242, 254, 0.1); cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; display: flex; justify-content: center; align-items: center; }
+        #retibot-toggle:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(0, 242, 254, 0.3); }
+        #retibot-window { width: 380px; max-height: calc(100vh - 120px); height: 600px; background: rgba(11, 24, 32, 0.25); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); border-radius: 20px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.15); display: none; flex-direction: column; border: 1px solid rgba(0, 242, 254, 0.2); }
+        .retibot-header { background: rgba(0,0,0,0.1); color: white; padding: 25px 20px; flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .retibot-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .retibot-badge { background: rgba(0, 242, 254, 0.1); color: #00f2fe; padding: 8px 15px; border-radius: 8px; font-size: 13px; font-weight: 700; border: 1px solid rgba(0, 242, 254, 0.2); display: flex; align-items: center; gap: 8px; box-shadow: 0 0 15px rgba(0, 242, 254, 0.1); }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+        .action-btn { background: transparent; border: none; color: #9ca3af; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; padding: 5px; border-radius: 5px; }
+        .action-btn:hover { color: #00f2fe; background: rgba(255,255,255,0.05); }
+        .retibot-header p { font-size: 13px; color: #9ca3af; line-height: 1.5; margin-top: 5px; }
+        .retibot-body { flex: 1; padding: 25px 20px; overflow-y: auto; background: transparent; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .retibot-input-area { padding: 15px; background: rgba(0,0,0,0.1); border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .retibot-input-area input { flex: 1; padding: 12px 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 25px; font-size: 13px; outline: none; transition: 0.3s; font-family: 'Poppins', sans-serif;}
+        .retibot-input-area input::placeholder { color: #9ca3af; }
+        .retibot-input-area input:focus { border-color: #00f2fe; background: rgba(255,255,255,0.1); box-shadow: 0 0 10px rgba(0,242,254,0.1); }
+        .retibot-send { background: #00f2fe; color: #0b1820; border: none; width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; flex-shrink: 0; }
+        .retibot-send:hover { background: #00c6d1; transform: scale(1.05); box-shadow: 0 0 15px rgba(0, 242, 254, 0.4); }
+        .retibot-send svg { margin-left: -2px; }
+        .msg-row { display: flex; width: 100%; }
+        .msg-user { justify-content: flex-end; }
+        .msg-bot { justify-content: flex-start; }
+        .msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 15px; font-size: 13px; line-height: 1.5; }
+        .msg-user .msg-bubble { background: linear-gradient(135deg, #00f2fe, #4facfe); color: #0b1820; font-weight: 500; border-bottom-right-radius: 3px; box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2); }
+        .msg-bot .msg-bubble { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); color: #ffffff; border-bottom-left-radius: 3px; backdrop-filter: blur(2px); }
+
+        @media (max-width: 900px) {
+            .scanner-body { flex-direction: column; }
+            .info-sections-wrapper { grid-template-columns: 1fr; }
+            .patient-info-bar { flex-direction: column; align-items: flex-start;}
+            .p-item:not(:last-child)::after { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-overlay"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 12px;">
+                <path d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12" stroke="#00f2fe" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.3"/>
+                <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22M12 2C12 2 8 6 8 12C8 18 12 22 12 22M2 12H22" stroke="#00f2fe" stroke-width="1" stroke-opacity="0.15"/>
+                <path d="M8 12.5L11 15.5L18.5 8.5" stroke="#00f2fe" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            RetiCheck AI
+        </div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/patient_form">New Patient</a></li>
+            <li><a href="/upload" class="active">New Scan</a></li>
+            <li>
+                <a href="/database" style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 9V7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7V9H6C4.89543 9 4 9.89543 4 11V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V11C20 9.89543 19.1046 9 18 9H17ZM9 7C9 5.34315 10.3431 4 12 4C13.6569 4 15 5.34315 15 7V9H9V7ZM18 20H6V11H18V20ZM12 13C11.1716 13 10.5 13.6716 10.5 14.5C10.5 15.3284 11.1716 16 12 16C12.8284 16 13.5 15.3284 13.5 14.5C13.5 13.6716 12.8284 13 12 13Z" fill="currentColor"/>
+                    </svg>
+                    Patient Database
+                </a>
+            </li>
+        </ul>
+        <button class="btn-nav" onclick="window.location.href='/'">Logout</button>
+    </nav>
+
+    <div class="scan-container">
+        
+        <div class="scan-panel">
+            
+            <div class="patient-info-bar">
+                <div class="p-group">
+                    <div class="p-item">
+                        <span class="p-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Patient ID
+                        </span>
+                        <span class="p-val highlight" id="dispId">--</span>
+                    </div>
+                    <div class="p-item">
+                        <span class="p-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Full Name
+                        </span>
+                        <span class="p-val" id="dispName">Unknown</span>
+                    </div>
+                    <div class="p-item">
+                        <span class="p-label">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            Demographics
+                        </span>
+                        <span class="p-val" id="dispDemo">-- Yrs / --</span>
+                    </div>
+                </div>
+                <div class="p-status">
+                    <div class="pulse-dot"></div> RECORD LINKED
+                </div>
+            </div>
+
+            <div class="scanner-body">
+                <div class="scanner-left">
+                    <div class="bracket tl"></div>
+                    <div class="bracket tr"></div>
+                    <div class="bracket bl"></div>
+                    <div class="bracket br"></div>
+                    
+                    <div class="system-text">System ID: <span id="sysIdText">RC-2026</span><br><span id="sysStatus">WAITING FOR INPUT</span></div>
+
+                    <div class="scan-circle" onclick="document.getElementById('fileInput').click()">
+                        <img id="previewImg" src="https://images.unsplash.com/photo-1542261621-17731776ceb1?q=80&w=400&auto=format&fit=crop" alt="Eye">
+                        <div class="upload-instruction" id="upText">CLICK TO UPLOAD<br>FUNDUS SCAN</div>
+                        
+                        <div class="scan-line" id="scanLine"></div>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" onchange="startScanProcess(this)">
+                </div>
+
+                <div class="scanner-right">
+                    
+                    <div class="instruction-box">
+                        <h2>AI DIAGNOSTICS</h2>
+                        <ul class="steps">
+                            <li id="step1" class="active">1. Upload patient's non-mydriatic fundus scan.</li>
+                            <li id="step2">2. Initializing Convolutional Neural Network.</li>
+                            <li id="step3">3. Generating XAI Occlusion Heatmaps...</li>
+                        </ul>
+                    </div>
+
+                    <div class="status-row">
+                        <div><span class="dot active-dot"></span> UPLOAD: OK</div>
+                        <div><span class="dot" id="dotFocus"></span> CNN MODEL: <span id="txtFocus">STANDBY</span></div>
+                        <div><span class="dot" id="dotAnalysis"></span> ANALYSIS: <span id="txtAnalysis">STANDBY</span></div>
+                    </div>
+
+                    <div class="progress-area">
+                        <div class="percentage" id="percentVal">0%</div>
+                        <div class="progress-title">SCAN PROGRESS</div>
+                        <div class="progress-sub" id="progressSub">AWAITING CLINICAL IMAGE...</div>
+                        
+                        <button class="btn-result" id="btnResult" onclick="window.location.href='/result'">Generate Clinical Report</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="info-sections-wrapper">
+        
+        <div class="info-card">
+            <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </div>
+            <h3>Image Quality Guidelines</h3>
+            <p>For optimal AI prediction accuracy, ensure the uploaded fundus images meet the clinical standards:</p>
+            <ul>
+                <li>Macula centered with clear optic disc visibility.</li>
+                <li>Minimum resolution of 1024x1024 pixels.</li>
+                <li>Avoid severe glare or light artifacts.</li>
+            </ul>
+        </div>
+
+        <div class="info-card">
+            <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+            <h3>Diagnostic Parameters</h3>
+            <p>Our deep learning models currently evaluate the retinal scans for multiple pathological features:</p>
+            <ul>
+                <li><strong>Diabetic Retinopathy:</strong> Microaneurysms, Exudates.</li>
+                <li><strong>Glaucoma:</strong> Cup-to-Disc ratio abnormalities.</li>
+                <li><strong>Macular Edema:</strong> Fluid accumulation detection.</li>
+            </ul>
+        </div>
+
+        <div class="info-card">
+            <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            </div>
+            <h3>AI Analysis Methodology</h3>
+            <p>RetiCheck employs a sophisticated Convolutional Neural Network (CNN) architecture. Post-processing involves Grad-CAM (Gradient-weighted Class Activation Mapping) to produce visual heatmaps, ensuring clinical explainability.</p>
+        </div>
+
+        <div class="info-card">
+            <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <h3>Data Security & Compliance</h3>
+            <p>All clinical data and patient images are processed temporarily in a secure buffer. Permanent records are stored locally with AES-256 encryption, adhering strictly to global HIPAA patient privacy protocols.</p>
+        </div>
+
+    </div>
+
+    <div id="retibot-container">
+        <div id="retibot-window">
+            <div class="retibot-header">
+                <div class="retibot-top-bar">
+                    <span class="retibot-badge">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        &nbsp;RetiBot Support
+                    </span>
+                    <div class="header-actions">
+                        <button class="action-btn" onclick="toggleChat()" title="Close">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <p>Typically replies instantly. Feel free to ask any diagnostic-related queries.</p>
+            </div>
+
+            <div class="retibot-body" id="retibot-chat-history">
+                <div class="msg-row msg-bot">
+                    <div class="msg-bubble">Hello there! 👋 I am RetiBot, your AI Assistant. How can I help you today?</div>
+                </div>
+            </div>
+
+            <div class="retibot-input-area">
+                <input type="text" id="retibot-input" placeholder="Type your message here..." onkeypress="if(event.key === 'Enter') sendMessage()">
+                <button class="retibot-send" onclick="sendMessage()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <button id="retibot-toggle" onclick="toggleChat()">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3.5" stroke="#00f2fe" stroke-width="2.5" fill="none"/>
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        // 🔥 FETCH PATIENT DATA FROM LOCAL STORAGE 🔥
+        document.addEventListener("DOMContentLoaded", () => {
+            let records = JSON.parse(localStorage.getItem('reticheck_patients_data')) || [];
+            if(records.length > 0) {
+                // Get the most recently added patient
+                let currentPatient = records[records.length - 1];
+                document.getElementById('dispId').innerText = currentPatient.id;
+                document.getElementById('sysIdText').innerText = currentPatient.id;
+                document.getElementById('dispName').innerText = currentPatient.name;
+                document.getElementById('dispDemo').innerText = `${currentPatient.age} Yrs / ${currentPatient.gender}`;
+            }
+        });
+
+        // 🔥 ORIGINAL SCAN LOGIC 🔥
+        function startScanProcess(input) {
+            if (input.files && input.files[0]) {
+                
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('previewImg').style.opacity = '1';
+                }
+                reader.readAsDataURL(input.files[0]);
+
+                document.getElementById('upText').style.display = 'none';
+                document.getElementById('sysStatus').innerText = 'AI SCAN ACTIVE';
+                document.getElementById('sysStatus').style.color = '#00f2fe';
+                
+                let scanLine = document.getElementById('scanLine');
+                scanLine.style.display = 'block';
+                scanLine.style.animation = 'scanMove 2s linear infinite';
+
+                document.getElementById('progressSub').innerText = 'CALCULATING DEEP LEARNING FEATURES...';
+                document.getElementById('step1').classList.remove('active');
+                document.getElementById('step2').classList.add('active');
+                
+                document.getElementById('dotFocus').classList.add('active-dot');
+                document.getElementById('txtFocus').innerText = 'ACTIVE';
+
+                let percentVal = document.getElementById('percentVal');
+                let counter = 0;
+                let aiCompleted = false;
+                let aiData = null;
+
+                let scanInterval = setInterval(() => {
+                    if (counter < 85) {
+                        counter += Math.floor(Math.random() * 4) + 1;
+                        if(counter > 85) counter = 85;
+                        percentVal.innerText = counter + '%';
+                    }
+                    
+                    if (aiCompleted && counter >= 85) {
+                        clearInterval(scanInterval);
+                        finishScan(aiData);
+                    }
+                }, 100);
+
+                let formData = new FormData();
+                formData.append('image', input.files[0]);
+
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if(!response.ok) throw new Error("Server error");
+                    return response.json();
+                })
+                .then(data => {
+                    aiData = data;
+                    aiCompleted = true; 
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    clearInterval(scanInterval);
+                    alert("Error connecting to AI Server! Is app.py running?");
+                    
+                    scanLine.style.display = 'none';
+                    document.getElementById('progressSub').innerText = 'SCAN FAILED.';
+                    document.getElementById('progressSub').style.color = '#ef4444';
+                });
+
+                function finishScan(data) {
+                    let finishInterval = setInterval(() => {
+                        counter += 5;
+                        if(counter >= 100) {
+                            counter = 100;
+                            clearInterval(finishInterval);
+                            
+                            scanLine.style.animation = 'none';
+                            scanLine.style.display = 'none';
+                            
+                            document.getElementById('step2').classList.remove('active');
+                            document.getElementById('step3').classList.add('active');
+                            document.getElementById('dotAnalysis').classList.add('active-dot');
+                            document.getElementById('txtAnalysis').innerText = 'COMPLETE';
+                            
+                            document.getElementById('progressSub').innerText = 'ANALYSIS COMPLETE. READY FOR CLINICAL REVIEW.';
+                            document.getElementById('progressSub').style.color = '#00f2fe';
+                            document.getElementById('sysStatus').innerText = 'DIAGNOSIS COMPLETE';
+                            
+                            document.getElementById('btnResult').style.display = 'block';
+                        
+                            localStorage.setItem('orig_b64', data.orig_img);
+                            if(data.heat_img && data.heat_img !== "") {
+                                localStorage.setItem('heat_b64', data.heat_img);
+                            } else {
+                                localStorage.removeItem('heat_b64');
+                            }
+                        }
+                        percentVal.innerText = counter + '%';
+                    }, 50);
+                }
+            }
+        }
+
+        // --- CHATBOT LOGIC ---
+        function toggleChat() {
+            const win = document.getElementById('retibot-window');
+            win.style.display = (win.style.display === 'none' || win.style.display === '') ? 'flex' : 'none';
+        }
+        
+        function appendMessage(sender, text) {
+            const history = document.getElementById('retibot-chat-history');
+            const row = document.createElement('div');
+            row.className = 'msg-row ' + (sender === 'user' ? 'msg-user' : 'msg-bot');
+            row.innerHTML = `<div class="msg-bubble">${text}</div>`;
+            history.appendChild(row);
+            history.scrollTop = history.scrollHeight; 
+        }
+
+        async function sendMessage() {
+            const inputField = document.getElementById('retibot-input');
+            const msg = inputField.value.trim();
+            if (!msg) return;
+            
+            appendMessage('user', msg);
+            inputField.value = '';
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await response.json();
+                setTimeout(() => appendMessage('bot', data.reply), 500); 
+            } catch (err) {
+                setTimeout(() => appendMessage('bot', "⚠️ Connection Error. Ensure AI Server is running."), 500);
+            }
+        }
+    </script>
+</body>
+</html>
